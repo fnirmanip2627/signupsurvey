@@ -1529,32 +1529,75 @@
             }
         }
 
-        function submitQuestionnaire() {
-            if (hasNeckPain) {
-                const pcsResponses = {};
-                for (let i = 0; i < 13; i++) {
-                    const sel = document.querySelector(`input[name="pcs_item_${i}"]:checked`);
-                    if (!sel) {
-                        showValidationBanner(selectedLang === 'zh' ? `請回答 PCS 第 ${i + 1} 題。` : `Please answer item ${i + 1} of PCS.`);
-                        return;
-                    }
-                    pcsResponses[`Item_${i + 1}`] = parseInt(sel.value);
-                }
-                formData.pcs = pcsResponses;
-            } else {
-                formData.ndi = {};
-                formData.pcs = {};
-            }
-
+        // 1. Submit Questionnaire (Participant Action)
+        async function submitQuestionnaire() {
+            // Construct your form data as usual
             formData.id = getNextRespondentId();
             formData.timestamp = new Date().toLocaleString('zh-HK');
-
+        
+            // Always keep local fallback
             const existing = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
             existing.push(formData);
             localStorage.setItem(STORAGE_KEY, JSON.stringify(existing));
-
-            document.getElementById('s6_msg').textContent = I18N_TEXT[selectedLang].sec6_msg;
+        
+            try {
+                // Insert into Supabase table
+                const { error } = await supabaseClient
+                    .from('responses')
+                    .insert([{
+                        id: formData.id,
+                        participant_name: formData.demographics.name,
+                        has_neck_pain: formData.neckPainStatus.hasPain,
+                        full_data: formData
+                    }]);
+        
+                if (error) console.error('Supabase submission error:', error);
+            } catch (err) {
+                console.error('Network error during submission:', err);
+            }
+        
             goToSection(6);
+        }
+        
+        // 2. Load Central Data into Operator Dashboard
+        async function loadOperatorDashboardData() {
+            let allRecords = [];
+        
+            // Check if operator is signed in
+            const { data: { session } } = await supabaseClient.auth.getSession();
+        
+            if (session) {
+                // Operator is authenticated: fetch all records centrally
+                const { data, error } = await supabaseClient
+                    .from('responses')
+                    .select('full_data');
+        
+                if (!error && data) {
+                    allRecords = data.map(row => row.full_data);
+                }
+            }
+        
+            // Fallback to local storage if offline or not logged in
+            if (allRecords.length === 0) {
+                allRecords = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+            }
+        
+            renderOperatorTable(allRecords);
+        }
+        
+        // 3. Operator Authentication Function
+        async function loginOperator(email, password) {
+            const { data, error } = await supabaseClient.auth.signInWithPassword({
+                email: email,
+                password: password,
+            });
+        
+            if (error) {
+                alert('Operator login failed: ' + error.message);
+            } else {
+                alert('Operator mode synced with cloud database!');
+                loadOperatorDashboardData();
+            }
         }
 
         function restartForm() {
