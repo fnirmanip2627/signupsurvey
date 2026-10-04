@@ -1,0 +1,2122 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>fNIRS Research Questionnaire | 香港理工大學研究問卷</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- SheetJS for Excel Export -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    
+    <!-- Custom Theme Configuration -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        polyu: {
+                            800: '#7A0019',
+                            900: '#580012',
+                            50: '#FAF0F2',
+                            100: '#F4DFE4',
+                            600: '#9E0022'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans TC", sans-serif;
+            background-color: #f8fafc;
+        }
+        /* Dynamic Root Text Size Classes */
+        html.text-size-regular { font-size: 16px; }
+        html.text-size-large { font-size: 18.5px; }
+        html.text-size-xlarge { font-size: 21px; }
+
+        .radio-card input:checked + label {
+            border-color: #7A0019;
+            background-color: #FAF0F2;
+            color: #7A0019;
+        }
+        .step-active {
+            background-color: #7A0019;
+            color: white;
+            border-color: #7A0019;
+        }
+        .step-done {
+            background-color: #16a34a;
+            color: white;
+            border-color: #16a34a;
+        }
+        .step-pending {
+            background-color: #f1f5f9;
+            color: #64748b;
+            border-color: #cbd5e1;
+        }
+        
+        @media print {
+            body * {
+                visibility: hidden;
+            }
+            #detailModalContent, #detailModalContent * {
+                visibility: visible;
+            }
+            #detailModalContent {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body class="min-h-screen text-slate-800 flex flex-col">
+
+    <!-- Top Header Bar -->
+    <header class="bg-polyu-800 text-white shadow-md sticky top-0 z-40">
+        <div class="max-w-5xl mx-auto px-4 py-3 flex flex-wrap justify-between items-center gap-2">
+            <div class="flex items-center space-x-3">
+                <div class="bg-white/10 p-2 rounded-lg border border-white/20">
+                    <i class="fa-solid fa-brain text-rose-200 text-xl"></i>
+                </div>
+                <div>
+                    <h1 class="font-bold text-sm sm:text-base leading-tight">PolyU fNIRS Research</h1>
+                    <p class="text-xs text-rose-200">The Hong Kong Polytechnic University</p>
+                </div>
+            </div>
+            
+            <div class="flex items-center space-x-2">
+                <!-- Text Size Controls -->
+                <div class="flex items-center bg-white/10 p-1 rounded-lg border border-white/20 text-xs mr-1">
+                    <span class="text-rose-200 px-1 font-medium hidden md:inline"><i class="fa-solid fa-font mr-1"></i>Text Size:</span>
+                    <button type="button" onclick="setFontSize('regular')" id="fontBtn-regular" class="px-2 py-1 rounded bg-white text-polyu-800 font-bold shadow-xs transition text-xs">Regular</button>
+                    <button type="button" onclick="setFontSize('large')" id="fontBtn-large" class="px-2 py-1 rounded hover:bg-white/20 text-rose-100 font-medium transition text-xs">Large</button>
+                    <button type="button" onclick="setFontSize('xlarge')" id="fontBtn-xlarge" class="px-2 py-1 rounded hover:bg-white/20 text-rose-100 font-medium transition text-xs">X-Large</button>
+                </div>
+
+                <!-- Mode Indicator / Operator Login Button -->
+                <button id="modeToggleBtn" onclick="toggleModeClick()" class="text-xs sm:text-sm bg-white/10 hover:bg-white/20 text-white border border-white/30 px-3 py-1.5 rounded-lg flex items-center space-x-2 transition">
+                    <i id="modeIcon" class="fa-solid fa-user-gear"></i>
+                    <span id="modeBtnText">Operator Mode / 操作員模式</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="flex-1 max-w-4xl w-full mx-auto p-4 sm:p-6 my-4">
+
+        <!-- Operator Login Modal -->
+        <div id="operatorModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+            <div class="bg-white rounded-xl shadow-2xl max-w-md w-full p-6 border border-slate-200 animate-fade-in">
+                <div class="flex justify-between items-center mb-4 pb-3 border-b border-slate-100">
+                    <h3 class="text-lg font-bold text-polyu-800 flex items-center space-x-2">
+                        <i class="fa-solid fa-lock"></i>
+                        <span>Operator Authentication</span>
+                    </h3>
+                    <button onclick="closeOperatorModal()" class="text-slate-400 hover:text-slate-600">
+                        <i class="fa-solid fa-xmark text-xl"></i>
+                    </button>
+                </div>
+                
+                <p class="text-xs text-slate-600 mb-4">
+                    Please enter the operator passcode to access administration view:
+                </p>
+
+                <form id="operatorLoginForm" onsubmit="handleOperatorLogin(event)">
+                    <div class="mb-4">
+                        <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Passcode</label>
+                        <input type="password" id="passcodeInput" placeholder="Enter operator passcode" required
+                            class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-polyu-800">
+                        <p id="passcodeError" class="text-xs text-red-600 mt-1 hidden font-medium"></p>
+                    </div>
+
+                    <div class="flex justify-end space-x-2">
+                        <button type="button" onclick="closeOperatorModal()" class="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-lg">Cancel</button>
+                        <button type="submit" class="px-4 py-2 text-xs font-semibold bg-polyu-800 hover:bg-polyu-900 text-white rounded-lg shadow">Unlock Operator View</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Respondent Questionnaire Container -->
+        <div id="respondentView" class="block">
+            
+            <!-- Progress Tracker Bar -->
+            <div id="stepperContainer" class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 mb-6 hidden">
+                <div class="flex justify-between items-center max-w-2xl mx-auto relative">
+                    <div class="absolute top-1/2 left-0 right-0 h-1 bg-slate-200 -translate-y-1/2 z-0"></div>
+                    <div id="progressLine" class="absolute top-1/2 left-0 h-1 bg-polyu-800 -translate-y-1/2 z-0 transition-all duration-300" style="width: 0%;"></div>
+
+                    <!-- Step Indicators -->
+                    <div class="relative z-10 flex flex-col items-center">
+                        <div id="stepCircle-1" class="w-8 h-8 rounded-full border-2 flex items-center justify-center font-bold text-xs step-active shadow-sm">1</div>
+                        <span class="text-[10px] sm:text-xs font-medium text-slate-600 mt-1 text-center" id="stepLabel-1" data-i18n="step1_lbl">Personal Info</span>
+                    </div>
+                    <div class="relative z-10 flex flex-col items-center">
+                        <div id="stepCircle-2" class="w-8 h-8 rounded-full border-2 flex items-center justify-center font-bold text-xs step-pending shadow-sm">2</div>
+                        <span class="text-[10px] sm:text-xs font-medium text-slate-600 mt-1 text-center" id="stepLabel-2" data-i18n="step2_lbl">Screening</span>
+                    </div>
+                    <div class="relative z-10 flex flex-col items-center">
+                        <div id="stepCircle-3" class="w-8 h-8 rounded-full border-2 flex items-center justify-center font-bold text-xs step-pending shadow-sm">3</div>
+                        <span class="text-[10px] sm:text-xs font-medium text-slate-600 mt-1 text-center" id="stepLabel-3" data-i18n="step3_lbl">Neck Pain</span>
+                    </div>
+                    <div id="stepWrapper-4" class="relative z-10 flex flex-col items-center">
+                        <div id="stepCircle-4" class="w-8 h-8 rounded-full border-2 flex items-center justify-center font-bold text-xs step-pending shadow-sm">4</div>
+                        <span class="text-[10px] sm:text-xs font-medium text-slate-600 mt-1">NDI</span>
+                    </div>
+                    <div id="stepWrapper-5" class="relative z-10 flex flex-col items-center">
+                        <div id="stepCircle-5" class="w-8 h-8 rounded-full border-2 flex items-center justify-center font-bold text-xs step-pending shadow-sm">5</div>
+                        <span class="text-[10px] sm:text-xs font-medium text-slate-600 mt-1">PCS</span>
+                    </div>
+                    <div class="relative z-10 flex flex-col items-center">
+                        <div id="stepCircle-6" class="w-8 h-8 rounded-full border-2 flex items-center justify-center font-bold text-xs step-pending shadow-sm">6</div>
+                        <span class="text-[10px] sm:text-xs font-medium text-slate-600 mt-1 text-center" id="stepLabel-6" data-i18n="step6_lbl">End</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Validation Error Warning Banner -->
+            <div id="validationBanner" class="hidden bg-rose-50 border border-rose-300 text-rose-800 p-4 rounded-xl mb-4 text-sm flex items-center space-x-3 shadow-sm">
+                <i class="fa-solid fa-circle-exclamation text-rose-600 text-lg"></i>
+                <span id="validationMsg">Please complete all required questions before proceeding.</span>
+            </div>
+
+            <!-- SECTION 0: Information Page & Language Selection -->
+            <div id="section-0" class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 sm:p-8">
+                <!-- Research Titles -->
+                <div class="border-b border-slate-200 pb-6 mb-6">
+                    <span class="bg-polyu-50 text-polyu-800 border border-polyu-100 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider mb-3 inline-block">
+                        Research Study Questionnaire
+                    </span>
+                    <h1 class="text-xl sm:text-2xl font-bold text-slate-900 mb-2 leading-tight">
+                        基於功能性近紅外線光譜技術(fNIRS)探討顯示屏幕設備使用者慢性非特異性頸痛與執行功能的病例對照研究
+                    </h1>
+                    <h2 class="text-base sm:text-lg font-semibold text-slate-600 leading-snug">
+                        EXECUTIVE FUNCTION IN DISPLAY SCREEN EQUIPMENT USERS WITH CHRONIC NON-SPECIFIC NECK PAIN: A CASE-CONTROL fNIRS STUDY
+                    </h2>
+                </div>
+
+                <!-- Study Descriptions (Chinese & English) -->
+                <div class="space-y-6 text-slate-700 text-sm leading-relaxed mb-8">
+                    <!-- Traditional Chinese Description -->
+                    <div class="bg-slate-50 p-5 rounded-xl border border-slate-200 space-y-3">
+                        <p>
+                            香港理工大學誠邀閣下參與由香港理工大學康復治療科學系手法物理治療理學碩士課程的一組學生進行的上述研究項目。此項研究的指導教授為香港理工大學康復治療科學系曾敏霞教授及鄺偉恒教授。此項目已由香港理工大學研究倫理審查委員會批准 (參考編號: HSEARS20260828006)。本研究運用非侵入性且無輻射之光源測繪技術，於執行功能測試期間，調查並比較顯示屏幕設備使用者中，患有機械性慢性非特異性頸痛者與健康對照組之執行功能表現及前額葉皮層血氧變化。
+                        </p>
+                        <h4 class="font-bold text-slate-900 pt-1">個人資料的保密</h4>
+                        <p>
+                            您在此項目中提供的資料屬於研究數據。任何可以識別您身份的研究數據均屬個人資料。個人資料不包括已移除身份識別資訊的數據（匿名數據）。我們將盡可能在研究中減少使用您的個人資料。研究人員及研究團隊及其指導教授（包括香港理工大學的曾敏霞教授及鄺偉恒教授）將因應研究需要存取個人資料和研究數據。理工大學的授權人員或會獲准查閱資料，以進行研究監察及審計。
+                        </p>
+                        <h4 class="font-bold text-slate-900 pt-1">資料保存期限</h4>
+                        <p>
+                            所有關於您的資料將會保密，僅通過研究者所知的代碼進行識別，並進行文件加密。所收集的信息將在研究完成後保留 3 年。香港理工大學將採取合適的預防措施以防止您提供的資料遺失、遭盜用、未經授權的存取或銷毁。
+                        </p>
+                    </div>
+
+                    <!-- English Description -->
+                    <div class="bg-slate-50 p-5 rounded-xl border border-slate-200 space-y-3">
+                        <p>
+                            You are invited to participate in the above project conducted by a group of students studying at MSc in Manipulative Physiotherapy at The Department of Rehabilitation Sciences of The Hong Kong Polytechnic University (PolyU) under the supervision of Prof. Sharon Tsang, Associate Professor and Prof. Patrick Kwong, Assistant Professor of The Department of Rehabilitation Sciences of PolyU. The project has been approved by the PolyU Institutional Review Board (PolyU IRB) (or its Delegate) (Reference Number: HSEARS20260828006). The aim of this project is to investigate and compare executive function performance and prefrontal cortex oxygenation using non-invasive and radiation-free light source mapping during executive function tasks between Display Screen Equipment (DSE) users with chronic non-specific neck pain and healthy controls.
+                        </p>
+                        <h4 class="font-bold text-slate-900 pt-1">Confidentiality of Personal Data</h4>
+                        <p>
+                            The information you provide as part of the project is the research data. Any research data from which you can be identified is known as personal data. Personal data does not include data where the identity has been removed (anonymous data). We will minimize our use of personal data in the study as much as possible. The researcher and his supervisors (including Prof. Sharon Tsang and Prof. Patrick Kwong of PolyU) will have access to personal data and research data for the purposes of the study. Responsible members of PolyU may be given access for monitoring and/or audit of the research.
+                        </p>
+                        <h4 class="font-bold text-slate-900 pt-1">Data Retention</h4>
+                        <p>
+                            All information related to you will remain confidential and will be identifiable by codes only known to the researchers with file encryption. The information collected will be kept for 3 years after project completion. The Hong Kong Polytechnic University takes reasonable precautions to prevent the loss, misappropriation, unauthorized access or destruction of the information you provide.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Form Purpose Statement -->
+                <div class="bg-polyu-50 border-l-4 border-polyu-800 p-4 rounded-r-xl text-sm text-slate-800 mb-8 space-y-2">
+                    <p class="font-semibold text-polyu-900">
+                        在您自願決定參與前，請先填寫以下表格以確定您是否適合參加本研究。適合的參加者將會收到確認電郵及研究的詳細資訊。
+                    </p>
+                    <p class="italic text-slate-600">
+                        Before you decide to voluntarily take part in this study, please take some time to fill in this questionnaire to see if you are eligible for this study. If you are eligible, more detailed information of this study will be informed to you via Email.
+                    </p>
+                </div>
+
+                <!-- Language Selection Prompt -->
+                <div class="bg-white border-2 border-dashed border-slate-300 rounded-xl p-6 text-center">
+                    <label class="block font-bold text-slate-900 text-base mb-4">
+                        Please choose your preferred language for the questionnaire / 請選擇問卷語言：
+                    </label>
+                    <div class="flex flex-col sm:flex-row justify-center gap-4 max-w-md mx-auto">
+                        <button type="button" onclick="selectLanguage('zh')" id="langBtnZh" class="flex-1 py-3.5 px-6 rounded-xl border-2 border-slate-300 hover:border-polyu-800 text-slate-800 font-bold transition flex items-center justify-center space-x-2">
+                            <span>繁體中文 (Chinese)</span>
+                        </button>
+                        <button type="button" onclick="selectLanguage('en')" id="langBtnEn" class="flex-1 py-3.5 px-6 rounded-xl border-2 border-slate-300 hover:border-polyu-800 text-slate-800 font-bold transition flex items-center justify-center space-x-2">
+                            <span>English</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="mt-8 flex justify-end">
+                    <button type="button" onclick="startQuestionnaire()" class="bg-polyu-800 hover:bg-polyu-900 text-white font-bold py-3 px-8 rounded-xl shadow-lg transition flex items-center space-x-2">
+                        <span>Start Questionnaire / 開始填寫</span>
+                        <i class="fa-solid fa-arrow-right"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- SECTION 1: Personal Information -->
+            <div id="section-1" class="hidden bg-white rounded-xl shadow-sm border border-slate-200 p-6 sm:p-8">
+                <h3 class="text-xl font-bold text-slate-900 mb-6 pb-2 border-b border-slate-200 flex items-center space-x-2">
+                    <span class="w-7 h-7 rounded-full bg-polyu-800 text-white text-xs flex items-center justify-center font-bold">1</span>
+                    <span data-i18n="sec1_title">Personal Information / 基本資料</span>
+                </h3>
+
+                <div class="space-y-6">
+                    <div>
+                        <label class="block text-sm font-bold text-slate-800 mb-1">
+                            <span data-i18n="s1_name">Name</span> <span class="text-rose-600">*</span>
+                        </label>
+                        <input type="text" id="s1_name_input" class="w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-polyu-800" placeholder="e.g. Chan Tai Man">
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-bold text-slate-800 mb-1">
+                            <span data-i18n="s1_age">Age</span> <span class="text-xs text-slate-500 font-normal">(18–40)</span> <span class="text-rose-600">*</span>
+                        </label>
+                        <input type="number" id="s1_age_input" min="18" max="40" class="w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-polyu-800" placeholder="e.g. 25 (18-40)">
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-bold text-slate-800 mb-1">
+                            <span data-i18n="s1_email">Email Address</span> <span class="text-rose-600">*</span>
+                        </label>
+                        <input type="email" id="s1_email_input" class="w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-polyu-800" placeholder="name@example.com">
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-bold text-slate-800 mb-2">
+                            <span data-i18n="s1_edu">Level of Education</span> <span class="text-rose-600">*</span>
+                        </label>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3" id="eduOptionsContainer">
+                            <!-- Populated dynamically -->
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-8 pt-4 border-t border-slate-200 flex justify-between">
+                    <button type="button" onclick="goToSection(0)" class="bg-slate-200 hover:bg-slate-300 text-slate-700 font-semibold py-2.5 px-6 rounded-lg transition">
+                        <i class="fa-solid fa-arrow-left mr-2"></i><span data-i18n="btn_back">Back</span>
+                    </button>
+                    <button type="button" onclick="validateAndNext(1)" class="bg-polyu-800 hover:bg-polyu-900 text-white font-semibold py-2.5 px-6 rounded-lg transition shadow">
+                        <span data-i18n="btn_next">Next</span><i class="fa-solid fa-arrow-right ml-2"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- SECTION 2: Eligibility Screening -->
+            <div id="section-2" class="hidden bg-white rounded-xl shadow-sm border border-slate-200 p-6 sm:p-8">
+                <h3 class="text-xl font-bold text-slate-900 mb-2 pb-2 border-b border-slate-200 flex items-center space-x-2">
+                    <span class="w-7 h-7 rounded-full bg-polyu-800 text-white text-xs flex items-center justify-center font-bold">2</span>
+                    <span data-i18n="sec2_title">Eligibility Screening</span>
+                </h3>
+                <p class="text-xs text-slate-500 mb-6" data-i18n="sec2_subtitle">Please answer Yes or No for each statement based on your status.</p>
+
+                <div class="space-y-4" id="s2QuestionsList">
+                    <!-- Populated dynamically -->
+                </div>
+
+                <div class="mt-8 pt-4 border-t border-slate-200 flex justify-between">
+                    <button type="button" onclick="goToSection(1)" class="bg-slate-200 hover:bg-slate-300 text-slate-700 font-semibold py-2.5 px-6 rounded-lg transition">
+                        <i class="fa-solid fa-arrow-left mr-2"></i><span data-i18n="btn_back">Back</span>
+                    </button>
+                    <button type="button" onclick="validateAndNext(2)" class="bg-polyu-800 hover:bg-polyu-900 text-white font-semibold py-2.5 px-6 rounded-lg transition shadow">
+                        <span data-i18n="btn_next">Next</span><i class="fa-solid fa-arrow-right ml-2"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- SECTION 3: Neck Pain Status & Details -->
+            <div id="section-3" class="hidden bg-white rounded-xl shadow-sm border border-slate-200 p-6 sm:p-8">
+                <h3 class="text-xl font-bold text-slate-900 mb-4 pb-2 border-b border-slate-200 flex items-center space-x-2">
+                    <span class="w-7 h-7 rounded-full bg-polyu-800 text-white text-xs flex items-center justify-center font-bold">3</span>
+                    <span data-i18n="sec3_title">Neck Pain Assessment</span>
+                </h3>
+
+                <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 mb-6">
+                    <label class="block font-bold text-slate-900 mb-3" data-i18n="s3_initial_q">
+                        Do you experience any neck pain in past 6 months?
+                    </label>
+                    <div class="flex space-x-4">
+                        <label class="flex items-center space-x-2 cursor-pointer bg-white px-4 py-2 border rounded-lg hover:border-polyu-800">
+                            <input type="radio" name="s3_has_pain" value="yes" onchange="toggleNeckPainBranch('yes')" class="accent-polyu-800">
+                            <span class="font-semibold text-slate-800" data-i18n="opt_yes">有</span>
+                        </label>
+                        <label class="flex items-center space-x-2 cursor-pointer bg-white px-4 py-2 border rounded-lg hover:border-polyu-800">
+                            <input type="radio" name="s3_has_pain" value="no" onchange="toggleNeckPainBranch('no')" class="accent-polyu-800">
+                            <span class="font-semibold text-slate-800" data-i18n="opt_no">沒有</span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- BRANCH YES: Detailed Neck Pain Questions -->
+                <div id="s3_yes_branch" class="hidden space-y-6">
+                    <div id="s3_q1_box" class="p-4 rounded-xl border border-slate-200 bg-white shadow-xs"></div>
+                    <div id="s3_q2_box" class="p-4 rounded-xl border border-slate-200 bg-white shadow-xs"></div>
+                    <div id="s3_q3_box" class="p-4 rounded-xl border border-slate-200 bg-white shadow-xs"></div>
+                    <div id="s3_q4_box" class="p-4 rounded-xl border border-slate-200 bg-white shadow-xs"></div>
+                    <div id="s3_q5_box" class="p-4 rounded-xl border border-slate-200 bg-white shadow-xs"></div>
+                </div>
+
+                <!-- BRANCH NO: Non-neck pain question -->
+                <div id="s3_no_branch" class="hidden space-y-6">
+                    <div id="s3_other_pain_box" class="p-4 rounded-xl border border-slate-200 bg-amber-50/50"></div>
+                </div>
+
+                <div class="mt-8 pt-4 border-t border-slate-200 flex justify-between">
+                    <button type="button" onclick="goToSection(2)" class="bg-slate-200 hover:bg-slate-300 text-slate-700 font-semibold py-2.5 px-6 rounded-lg transition">
+                        <i class="fa-solid fa-arrow-left mr-2"></i><span data-i18n="btn_back">Back</span>
+                    </button>
+                    <button type="button" onclick="validateAndNext(3)" class="bg-polyu-800 hover:bg-polyu-900 text-white font-semibold py-2.5 px-6 rounded-lg transition shadow">
+                        <span data-i18n="btn_next">Next</span><i class="fa-solid fa-arrow-right ml-2"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- SECTION 4: Neck Disability Index (NDI) -->
+            <div id="section-4" class="hidden bg-white rounded-xl shadow-sm border border-slate-200 p-6 sm:p-8">
+                <div class="border-b border-slate-200 pb-4 mb-6">
+                    <h3 class="text-xl font-bold text-slate-900 flex items-center space-x-2">
+                        <span class="w-7 h-7 rounded-full bg-polyu-800 text-white text-xs flex items-center justify-center font-bold">4</span>
+                        <span data-i18n="sec4_title">Neck Disability Index (NDI)</span>
+                    </h3>
+                    <p class="text-xs text-slate-600 mt-2 leading-relaxed" data-i18n="ndi_instructions">
+                        This questionnaire has been designed to give us information as to how your neck pain has affected your ability to manage in everyday life. Please answer every section and mark in each section only the ONE box that applies to you.
+                    </p>
+                </div>
+
+                <div class="space-y-8" id="ndiQuestionsContainer">
+                    <!-- 10 NDI Sections populated dynamically -->
+                </div>
+
+                <div class="mt-8 pt-4 border-t border-slate-200 flex justify-between">
+                    <button type="button" onclick="goToSection(3)" class="bg-slate-200 hover:bg-slate-300 text-slate-700 font-semibold py-2.5 px-6 rounded-lg transition">
+                        <i class="fa-solid fa-arrow-left mr-2"></i><span data-i18n="btn_back">Back</span>
+                    </button>
+                    <button type="button" onclick="validateAndNext(4)" class="bg-polyu-800 hover:bg-polyu-900 text-white font-semibold py-2.5 px-6 rounded-lg transition shadow">
+                        <span data-i18n="btn_next">Next</span><i class="fa-solid fa-arrow-right ml-2"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- SECTION 5: Pain Catastrophizing Scale (PCS) -->
+            <div id="section-5" class="hidden bg-white rounded-xl shadow-sm border border-slate-200 p-6 sm:p-8">
+                <div class="border-b border-slate-200 pb-4 mb-6">
+                    <h3 class="text-xl font-bold text-slate-900 flex items-center space-x-2">
+                        <span class="w-7 h-7 rounded-full bg-polyu-800 text-white text-xs flex items-center justify-center font-bold">5</span>
+                        <span data-i18n="sec5_title">Pain Catastrophizing Scale (PCS)</span>
+                    </h3>
+                    <p class="text-xs text-slate-600 mt-2 leading-relaxed" data-i18n="pcs_instructions">
+                        Everyone experiences painful situations at some point in their lives. We are interested in the types of thoughts and feelings that you have when you are in pain. Please indicate the degree to which you have these thoughts and feelings on a scale of 0 to 4.
+                    </p>
+                </div>
+
+                <div class="space-y-6" id="pcsQuestionsContainer">
+                    <!-- 13 PCS items populated dynamically -->
+                </div>
+
+                <div class="mt-8 pt-4 border-t border-slate-200 flex justify-between">
+                    <button type="button" onclick="goToSection(4)" class="bg-slate-200 hover:bg-slate-300 text-slate-700 font-semibold py-2.5 px-6 rounded-lg transition">
+                        <i class="fa-solid fa-arrow-left mr-2"></i><span data-i18n="btn_back">Back</span>
+                    </button>
+                    <button type="button" onclick="submitQuestionnaire()" class="bg-emerald-700 hover:bg-emerald-800 text-white font-bold py-2.5 px-8 rounded-lg transition shadow">
+                        <i class="fa-solid fa-paper-plane mr-2"></i><span data-i18n="btn_submit">Submit Questionnaire</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- SECTION 6: Submission Completed Page -->
+            <div id="section-6" class="hidden bg-white rounded-xl shadow-sm border border-slate-200 p-8 text-center">
+                <div class="w-20 h-20 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-6 text-3xl shadow-inner">
+                    <i class="fa-solid fa-circle-check"></i>
+                </div>
+
+                <h2 class="text-2xl font-bold text-slate-900 mb-4" data-i18n="sec6_thanks">
+                    Form Submitted Successfully!
+                </h2>
+
+                <div class="max-w-xl mx-auto space-y-4 text-slate-700 text-sm leading-relaxed mb-8 bg-slate-50 p-6 rounded-xl border border-slate-200">
+                    <p id="s6_msg"></p>
+                    <div class="pt-4 border-t border-slate-200 text-xs text-slate-600">
+                        <p class="font-bold mb-1 text-slate-800">Inquiry Contact / 查詢聯絡：</p>
+                        <p>如有任何查詢，您可向香港理工大學曾敏霞教授（電話：2766 4332或電郵：Sharon.Tsang@polyu.edu.hk）查詢</p>
+                        <p class="mt-1 italic">If you have any questions, you may contact Prof Sharon Tsang (tel. no.: 27664332 and email: Sharon.Tsang@polyu.edu.hk) of PolyU.</p>
+                    </div>
+                </div>
+
+                <button type="button" onclick="restartForm()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold py-2.5 px-6 rounded-lg text-sm border border-slate-300 transition">
+                    <i class="fa-solid fa-rotate-left mr-2"></i>Return to Homepage
+                </button>
+            </div>
+
+        </div>
+
+        <!-- Operator Dashboard View -->
+        <div id="operatorDashboard" class="hidden bg-white rounded-xl shadow-sm border border-slate-200 p-6 sm:p-8">
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-slate-200 pb-6 mb-6">
+                <div>
+                    <div class="flex items-center space-x-2">
+                        <span class="bg-amber-100 text-amber-800 text-xs font-bold px-2.5 py-0.5 rounded uppercase">Operator Mode</span>
+                        <span class="text-xs text-slate-500" id="recordCountBadge">0 Responses</span>
+                    </div>
+                    <h2 class="text-2xl font-bold text-slate-900 mt-1">Research Response Dashboard</h2>
+                </div>
+
+                <div class="flex flex-wrap gap-2">
+                    <button onclick="openChangePasscodeModal()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs sm:text-sm font-semibold px-3.5 py-2 rounded-lg border border-slate-300 transition flex items-center space-x-1.5">
+                        <i class="fa-solid fa-key text-slate-500"></i>
+                        <span>Change Passcode</span>
+                    </button>
+                    <button onclick="exportToExcel()" class="bg-emerald-700 hover:bg-emerald-800 text-white text-xs sm:text-sm font-semibold px-4 py-2 rounded-lg shadow flex items-center space-x-2 transition">
+                        <i class="fa-solid fa-file-excel text-base"></i>
+                        <span>Export Excel (.xlsx)</span>
+                    </button>
+                    <button onclick="exportToCSV()" class="bg-slate-700 hover:bg-slate-800 text-white text-xs sm:text-sm font-semibold px-4 py-2 rounded-lg shadow flex items-center space-x-2 transition">
+                        <i class="fa-solid fa-file-csv text-base"></i>
+                        <span>Export CSV</span>
+                    </button>
+                    <button onclick="exitOperatorMode()" class="bg-slate-200 hover:bg-slate-300 text-slate-700 text-xs sm:text-sm font-semibold px-3 py-2 rounded-lg transition">
+                        <i class="fa-solid fa-right-from-bracket mr-1"></i> Exit
+                    </button>
+                </div>
+            </div>
+
+            <!-- Analytics Summary Cards -->
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+                <div class="bg-slate-50 border border-slate-200 p-4 rounded-xl">
+                    <div class="text-slate-500 text-xs font-medium uppercase">Total Participants</div>
+                    <div class="text-2xl font-bold text-slate-900 mt-1" id="statTotal">0</div>
+                </div>
+                <div class="bg-slate-50 border border-slate-200 p-4 rounded-xl">
+                    <div class="text-slate-500 text-xs font-medium uppercase">Fully Eligible</div>
+                    <div class="text-2xl font-bold text-emerald-700 mt-1" id="statEligible">0</div>
+                </div>
+                <div class="bg-slate-50 border border-slate-200 p-4 rounded-xl">
+                    <div class="text-slate-500 text-xs font-medium uppercase">Neck Pain vs Control</div>
+                    <div class="text-2xl font-bold text-slate-800 mt-1" id="statGroupBreakdown">0 / 0</div>
+                </div>
+            </div>
+
+            <!-- Management Tools Bar -->
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4 text-xs">
+                <input type="text" id="tableSearch" onkeyup="filterTable()" placeholder="Search by name or email..." class="px-3 py-2 border border-slate-300 rounded-lg w-full sm:w-64 focus:outline-none focus:ring-1 focus:ring-polyu-800">
+                <div class="space-x-2">
+                    <button onclick="loadDemoData()" class="text-slate-600 hover:text-polyu-800 underline font-medium">Add Sample Demo Data</button>
+                    <span class="text-slate-300">|</span>
+                    <button onclick="clearAllResponses()" class="text-rose-600 hover:text-rose-800 underline font-medium">Clear All Data</button>
+                </div>
+            </div>
+
+            <!-- Submissions Table -->
+            <div class="overflow-x-auto border border-slate-200 rounded-xl shadow-xs">
+                <table class="w-full text-left text-xs text-slate-700">
+                    <thead class="bg-slate-100 text-slate-800 uppercase font-bold text-[11px] border-b border-slate-200">
+                        <tr>
+                            <th class="p-3">ID / Date</th>
+                            <th class="p-3">Name</th>
+                            <th class="p-3">Age</th>
+                            <th class="p-3">Group</th>
+                            <th class="p-3">Gen. Screening</th>
+                            <th class="p-3">Group Criteria</th>
+                            <th class="p-3">Overall Status</th>
+                            <th class="p-3 text-right">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="responsesTableBody" class="divide-y divide-slate-200 bg-white">
+                        <!-- Populated dynamically -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Participant Detail Modal in Operator Mode ("View Report") -->
+        <div id="detailModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+            <div class="bg-white rounded-xl shadow-2xl max-w-4xl w-full max-h-[92vh] flex flex-col p-6 border border-slate-200">
+                <div class="flex justify-between items-center pb-3 border-b border-slate-200">
+                    <div>
+                        <h3 class="text-lg font-bold text-slate-900" id="detailModalTitle">Participant Submission Detail Report</h3>
+                        <p class="text-xs text-slate-500" id="detailModalSubTitle"></p>
+                    </div>
+                    <button onclick="closeDetailModal()" class="text-slate-400 hover:text-slate-600">
+                        <i class="fa-solid fa-xmark text-xl"></i>
+                    </button>
+                </div>
+                
+                <div class="flex-1 overflow-y-auto py-4 space-y-6 text-xs text-slate-800 pr-2" id="detailModalContent">
+                    <!-- Populated dynamically via openDetailModal() -->
+                </div>
+
+                <div class="pt-3 border-t border-slate-200 flex justify-between items-center">
+                    <button onclick="exportSingleReportPDF()" class="px-3 py-2 bg-slate-100 hover:bg-slate-200 rounded-lg text-slate-700 font-medium text-xs border border-slate-300 transition flex items-center space-x-1.5">
+                        <i class="fa-solid fa-print"></i>
+                        <span>Print / Save PDF Report</span>
+                    </button>
+                    <button onclick="closeDetailModal()" class="px-5 py-2 bg-polyu-800 hover:bg-polyu-900 rounded-lg text-white font-semibold shadow text-xs">Close</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Change Passcode Modal -->
+        <div id="changePasscodeModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+            <div class="bg-white rounded-xl shadow-2xl max-w-md w-full p-6 border border-slate-200">
+                <div class="flex justify-between items-center mb-4 pb-3 border-b border-slate-100">
+                    <h3 class="text-lg font-bold text-slate-900 flex items-center space-x-2">
+                        <i class="fa-solid fa-key text-polyu-800"></i>
+                        <span>Change Operator Passcode</span>
+                    </h3>
+                    <button onclick="closeChangePasscodeModal()" class="text-slate-400 hover:text-slate-600">
+                        <i class="fa-solid fa-xmark text-xl"></i>
+                    </button>
+                </div>
+
+                <form id="changePasscodeForm" onsubmit="handleChangePasscode(event)" class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Current Passcode / 現有密碼</label>
+                        <input type="password" id="oldPasscodeInput" placeholder="Enter current passcode" required
+                            class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-polyu-800">
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 uppercase mb-1">New Passcode / 新密碼</label>
+                        <input type="password" id="newPasscodeInput" placeholder="Enter new passcode (min 8 chars)" required minlength="8"
+                            class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-polyu-800">
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Confirm New Passcode / 確認新密碼</label>
+                        <input type="password" id="confirmPasscodeInput" placeholder="Re-enter new passcode" required minlength="8"
+                            class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-polyu-800">
+                    </div>
+
+                    <p id="changePasscodeMsg" class="text-xs font-medium hidden"></p>
+
+                    <div class="flex justify-end space-x-2 pt-2 border-t border-slate-100">
+                        <button type="button" onclick="closeChangePasscodeModal()" class="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-lg">Cancel</button>
+                        <button type="submit" class="px-4 py-2 text-xs font-semibold bg-polyu-800 hover:bg-polyu-900 text-white rounded-lg shadow">Save New Passcode</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-slate-100 border-t border-slate-200 py-4 text-center text-xs text-slate-500 mt-auto">
+        <p>&copy; 2026 Department of Rehabilitation Sciences, The Hong Kong Polytechnic University. All Rights Reserved.</p>
+    </footer>
+
+    <script>
+        // Storage keys
+        const STORAGE_KEY = 'polyu_fnirs_research_submissions_v1';
+        const PASSCODE_STORAGE_KEY = 'polyu_operator_passcode_v1';
+        
+        // Default Operator Passcode
+        const DEFAULT_OPERATOR_PASSCODE = 'Poly!FNIR#2627';
+
+        function getOperatorPasscode() {
+            return localStorage.getItem(PASSCODE_STORAGE_KEY) || DEFAULT_OPERATOR_PASSCODE;
+        }
+
+        function setOperatorPasscode(newCode) {
+            localStorage.setItem(PASSCODE_STORAGE_KEY, newCode);
+        }
+
+        /**
+         * Respondent ID Generator starting strictly from 001 onward
+         */
+        function getNextRespondentId() {
+            const existing = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+            if (existing.length === 0) return '001';
+
+            let maxNum = 0;
+            existing.forEach(item => {
+                const num = parseInt(item.id, 10);
+                if (!isNaN(num) && num > maxNum) {
+                    maxNum = num;
+                }
+            });
+
+            const nextNum = maxNum + 1;
+            return String(nextNum).padStart(3, '0');
+        }
+
+        // Questionnaire state
+        let currentSection = 0;
+        let selectedLang = 'zh'; // 'zh' or 'en'
+        let currentFontSize = 'regular'; // 'regular', 'large', 'xlarge'
+        let hasNeckPain = false;
+        let isOperatorLoggedIn = false;
+
+        // Current participant response data structure
+        let formData = {
+            id: '',
+            timestamp: '',
+            lang: 'zh',
+            demographics: { name: '', age: '', email: '', education: '' },
+            eligibility: {},
+            neckPainStatus: {
+                hasPain: false,
+                diagnosedCause: '',
+                duration: '',
+                screenExacerbated: '',
+                intensity: 0,
+                coexistingConditions: '',
+                otherPain6Months: ''
+            },
+            ndi: {},
+            pcs: {}
+        };
+
+        const I18N_TEXT = {
+            zh: {
+                step1_lbl: '個人資料',
+                step2_lbl: '資格篩查',
+                step3_lbl: '頸痛狀況',
+                step6_lbl: '完成',
+                sec1_title: '個人資料',
+                s1_name: '姓名',
+                s1_age: '年齡',
+                s1_email: '電郵地址',
+                s1_edu: '教育程度',
+                edu_none: '無',
+                edu_primary: '小學',
+                edu_secondary: '中學',
+                edu_degree: '學士或以上',
+                sec2_title: '資格篩查',
+                sec2_subtitle: '請根據您的狀況，針對以下項目選擇「是」或「否」。',
+                sec3_title: '頸痛狀況評估',
+                s3_initial_q: '你在過去6個月內有否感到頸痛？',
+                opt_yes: '有',
+                opt_no: '沒有',
+                s3_q1: '你的頸痛有否曾被診斷為特定病因？(如意外後的揮鞭症候群，頸椎間盤突出，骨折...)',
+                s3_q2: '你的頸痛已持續多久？',
+                s3_q2_opt1: '少於一週',
+                s3_q2_opt2: '一週至一個月',
+                s3_q2_opt3: '一至三個月',
+                s3_q2_opt4: '三個月以上',
+                s3_q3: '你的頸痛通常因職業性屏幕工作而加劇，惟可經由休息、活動或頸部肌肉伸展而緩解。',
+                s3_q4: '請為過去一週的頸部疼痛平均強度評分。(0分沒有痛，10分最痛)',
+                s3_q5: '你是否患有廣泛性慢性疼痛綜合症（例如纖維肌痛）、系統性風濕病，或上肢肌肉骨骼疾病（例如嚴重的腕管綜合症）而可能影響手部反應速度？',
+                s3_other_pain: '在過去6個月內，你有其他身體部位感覺疼痛嗎？',
+                sec4_title: '頸部功能障礙指數 (NDI)',
+                ndi_instructions: '本問卷旨在了解您的頸痛如何影響您處理日常生活的能力。請回答每個部分，並在每個部分中僅選擇一項最符合您的描述。',
+                sec5_title: '疼痛災難化量表 (PCS)',
+                pcs_instructions: '每個人在一生中都會經歷疼痛情況。我們想了解您在疼痛時的想法和感受。請在 0 至 4 的等級中指出您出現這些想法和感受的程度。',
+                btn_back: '返回上頁',
+                btn_next: '下一頁',
+                btn_submit: '提交問卷',
+                sec6_thanks: '問卷已成功提交！',
+                sec6_msg: '您已成功填妥表格，感謝您的寶貴時間。我們將會及時審核您的回覆，並以電郵方式與您聯絡。'
+            },
+            en: {
+                step1_lbl: 'Personal Info',
+                step2_lbl: 'Screening',
+                step3_lbl: 'Neck Pain',
+                step6_lbl: 'Complete',
+                sec1_title: 'Personal Information',
+                s1_name: 'Name',
+                s1_age: 'Age',
+                s1_email: 'Email Address',
+                s1_edu: 'Level of Education',
+                edu_none: 'None',
+                edu_primary: 'Primary education',
+                edu_secondary: 'Secondary education',
+                edu_degree: 'Degree or above',
+                sec2_title: 'Eligibility Screening',
+                sec2_subtitle: 'Please answer Yes or No for each statement below.',
+                sec3_title: 'Neck Pain Assessment',
+                s3_initial_q: 'Do you experience any neck pain in past 6 months?',
+                opt_yes: 'Yes',
+                opt_no: 'No',
+                s3_q1: 'Has your neck pain ever been diagnosed with a specific cause? (e.g., post-accident whiplash syndrome, cervical disc herniation, fracture, etc.)',
+                s3_q2: 'How long has your neck pain lasted?',
+                s3_q2_opt1: 'Less than 1 week',
+                s3_q2_opt2: '1 week to 1 month',
+                s3_q2_opt3: '1 to 3 months',
+                s3_q2_opt4: 'More than 3 months',
+                s3_q3: 'Is your neck pain routinely exacerbated by occupational screen work, but relieved with rest, movement or stretching of the neck muscles?',
+                s3_q4: 'Please rate the average intensity of your neck pain over the preceding week. (0 = No pain, 10 = Worst pain)',
+                s3_q5: 'Do you suffer from co-existing widespread chronic pain syndromes (e.g., fibromyalgia), systemic rheumatologic diseases, or upper extremity musculoskeletal conditions (e.g., severe carpal tunnel syndrome) that could mechanically impair manual reaction speed during computerized testing?',
+                s3_other_pain: 'Do you experience pain in any other body part for the past 6 months?',
+                sec4_title: 'Neck Disability Index (NDI)',
+                ndi_instructions: 'This questionnaire has been designed to give us information as to how your neck pain has affected your ability to manage in everyday life. Please answer every section and mark in each section only the ONE box that applies to you.',
+                sec5_title: 'Pain Catastrophizing Scale (PCS)',
+                pcs_instructions: 'Everyone experiences painful situations at some point in their lives. We are interested in the types of thoughts and feelings that you have when you are in pain. Please indicate the degree to which you have these thoughts and feelings on a scale of 0 to 4.',
+                btn_back: 'Back',
+                btn_next: 'Next',
+                btn_submit: 'Submit Questionnaire',
+                sec6_thanks: 'Form Submitted Successfully!',
+                sec6_msg: 'You have completed the form. Thank you for your time. We will review your submission timely and reach out to you via email.'
+            }
+        };
+
+        const ELIGIBILITY_STATEMENTS = {
+            zh: [
+                "您具備足夠的認知能力以理解並遵循研究期間提供的測試指示。",
+                "作為工作的一部分，您幾乎每個工作日都需要長時間使用電腦屏幕。",
+                "您在單日內<mark class=\"bg-amber-200 text-amber-950 font-bold px-1.5 py-0.5 rounded border border-amber-300\">持續</mark>使用電腦屏幕至少4小時（注意：短暫離開屏幕的休息時間（每小時不超過10分鐘）不會中斷上述定義中的屏幕使用連續性。）",
+                "您在單日內<mark class=\"bg-amber-200 text-amber-950 font-bold px-1.5 py-0.5 rounded border border-amber-300\">累積</mark>使用電腦屏幕至少6小時。",
+                "有嚴重病理狀況的診斷（例如感染、癌症、心臟問題、動脈供血不足、上頸椎韌帶鬆弛、不明顱神經功能障礙或骨折）。",
+                "有脊柱、頭部或腦部外傷或手術史。",
+                "有頸椎神經根性疼痛或伴有感覺缺損或運動無力的神經根病變的臨床徵狀。",
+                "有任何會干擾功能性近紅外光譜信號穩定性的特徵（例如頭皮撕裂傷、局部顱外血腫或任何活動性出血、顱骨不完整或曾有顱骨切開術或顱骨修復術史）。",
+                "有神經或認知混雜因素（創傷性腦障礙、腦震盪、中風、癲癇或臨床診斷的神經發育障礙，如注意力不足過動症）。",
+                "正在服用抗抑鬱藥、抗焦慮藥或興奮劑，以及肌肉鬆弛劑、鴉片類藥物。",
+                "最近 4 週內有改變工作間的電腦設置(如調整螢幕大小、距離，書桌高度，椅子等) 。",
+                "有遊玩電子遊戲的習慣或最近有進行執行功能的訓練。"
+            ],
+            en: [
+                "You have the cognitive capacity to understand and follow the task instructions provided during the study.",
+                "As part of your job, you use a computer screen almost every working day for extended periods.",
+                "You use a computer screen <mark class=\"bg-amber-200 text-amber-950 font-bold px-1.5 py-0.5 rounded border border-amber-300\">continuously</mark> for at least 4 hours within a single day (Note: Short breaks away from the screen (not exceeding 10 minutes per hour) do not interrupt the continuity of your screen use for this definition).",
+                "You use a computer screen <mark class=\"bg-amber-200 text-amber-950 font-bold px-1.5 py-0.5 rounded border border-amber-300\">cumulatively</mark> for at least 6 hours across the same day.",
+                "Evidence of serious pathology (e.g. infection, cancer, cardiac involvement, arterial insufficiency, upper cervical ligamentous insufficiency, unexplained cranial nerve dysfunction or fracture).",
+                "History of trauma or surgery of the spine, head or brain.",
+                "Clinical signs of cervical radicular pain or radiculopathy with sensory deficits, or motor weakness.",
+                "Characteristics that would interfere with fNIRS signal stability (e.g. scalp laceration, localised extra-cranial haematoma or any active bleeding, and non-intact skull or history of craniotomy or cranial repair).",
+                "Neurological or cognitive confounds (traumatic brain injury, concussion, stroke, epilepsy, or clinically diagnosed neurodevelopmental disorders such as ADHD).",
+                "Current use of psychotropic medications such as antidepressants, anxiolytics or stimulants, and muscle relaxants, opioids.",
+                "Recent ergonomic workstation modifications within the past 4 weeks. (e.g. adjusting monitoring size or distance, desk height or chair type)",
+                "You have habit of playing video game or ongoing learning activities regarding executive function"
+            ]
+        };
+
+        const ELIGIBILITY_DESCRIPTIONS = {
+            zh: [
+                "1. 認知能力 (理解並遵循測試指示)",
+                "2. 每日使用電腦 (幾乎每個工作日)",
+                "3. 單日持續使用屏幕 (≥4小時)",
+                "4. 單日累積使用屏幕 (≥6小時)",
+                "5. 排除項：嚴重病理狀況 (感染/癌症/骨折等)",
+                "6. 排除項：脊柱/頭部外傷或手術史",
+                "7. 排除項：頸椎神經根病變徵狀",
+                "8. 排除項：fNIRS訊號干擾/頭骨受損",
+                "9. 排除項：神經或認知障礙 (ADHD/中風/癲癇等)",
+                "10. 排除項：服用相關精神/肌肉藥物",
+                "11. 排除項：近4週改變電腦設置",
+                "12. 排除項：電玩習慣/執行功能訓練"
+            ],
+            en: [
+                "1. Cognitive capacity to follow instructions",
+                "2. Daily computer screen use for work",
+                "3. Continuous screen use ≥4 hours/day",
+                "4. Cumulative screen use ≥6 hours/day",
+                "5. Excl: Serious pathology (infection/cancer/fracture)",
+                "6. Excl: History of spine/head/brain trauma or surgery",
+                "7. Excl: Cervical radicular pain / radiculopathy",
+                "8. Excl: Interference with fNIRS signal / skull integrity",
+                "9. Excl: Neurological/cognitive confounds (e.g. ADHD/stroke)",
+                "10. Excl: Psychotropic / muscle relaxant medication",
+                "11. Excl: Ergonomic setup changes in past 4 weeks",
+                "12. Excl: Video gaming habit / EF training"
+            ]
+        };
+
+        const NDI_DATA = {
+            zh: [
+                { title: "第一部分：疼痛強度", options: ["我現在沒有痛。", "我現在疼痛非常輕微。", "我現在疼痛中等程度。", "我現在疼痛相當嚴重。", "我現在疼痛非常嚴重。", "我現在疼痛嚴重得難以忍受。"] },
+                { title: "第二部分：個人照顧（洗澡、穿衣等）", options: ["我可以如常自我照顧，不會引起額外的疼痛。", "我可以如常自我照顧，但會引起額外的疼痛。", "自我照顧時會感到痛，我需要慢慢及小心進行。", "我需要一些協助，但大部分個人照顧仍可自理。", "我每天都需要協助才能完成大部分個人照顧。", "我無法自己穿衣、洗漱，只能臥床。"] },
+                { title: "第三部分：提舉重物", options: ["我可以提舉重物，不會引起額外的疼痛。", "我可以提舉重物，但會引起額外的疼痛。", "疼痛阻止我從地面提舉重物，但若重物放在適當高度（如桌上），我可以提舉。", "疼痛阻止我提舉重物，但我可以提舉輕至中等重量的物件（若位置適當）。", "我只能提舉非常輕的物件。", "我完全無法提舉或搬運任何物件。"] },
+                { title: "第四部分：閱讀", options: ["我閱讀多久都可以，不會引起頸痛。", "我閱讀多久都可以，但會引起輕微頸痛。", "我閱讀多久都可以，但會引起中等頸痛。", "由於中等程度的頸痛，我無法閱讀太久。", "由於嚴重的頸痛，我幾乎無法閱讀。", "由於極度嚴重的頸痛，我完全無法閱讀。"] },
+                { title: "第五部分：頭痛", options: ["我完全沒有頭痛。", "我有輕微頭痛，出現頻率較低。", "我有中等程度頭痛，出現頻率較低。", "我有中等程度頭痛，出現頻率較高。", "我有嚴重頭痛，出現頻率很高。", "我幾乎一直都有極嚴重的頭痛。"] },
+                { title: "第六部分：集中注意力", options: ["我可以完全集中注意力，沒有任何困難。", "我可以完全集中注意力，但需要輕微努力。", "要集中注意力時，我需要適度的努力。", "由於頸痛，我要集中注意力感到相當困難。", "由於頸痛，我要集中注意力感到非常困難。", "我完全無法集中注意力。"] },
+                { title: "第七部分：工作", options: ["我可以做我想做的工作量。", "我可以做平時的工作，但不能做更多。", "我可以做大部分平時的工作，但不能做更多。", "我無法做平時的工作。", "我幾乎無法做任何工作。", "我完全無法做任何工作。"] },
+                { title: "第八部分：駕駛 / 搭乘交通工具", options: ["我可以駕駛/搭車，不會有任何頸痛。", "我可以駕駛/搭車，只要我願意，但有輕微頸痛。", "我可以駕駛/搭車，只要我願意，但有中等頸痛。", "由於中等頸痛，我無法想駕駛/搭車多久就多久。", "由於嚴重頸痛，我幾乎無法駕駛/搭車。", "由於嚴重頸痛，我完全無法駕駛/搭車。"] },
+                { title: "第九部分：睡眠", options: ["我睡眠沒有任何問題。", "我的睡眠受到輕微干擾（少於1小時失眠）。", "我的睡眠受到中度干擾（1-2小時失眠）。", "我的睡眠受到適度干擾（2-3小時失眠）。", "我的睡眠受到嚴重干擾（3-5小時失眠）。", "我的睡眠受到極嚴重干擾（5-7小時失眠）。"] },
+                { title: "第十部分：休閒活動", options: ["我可以參與所有休閒活動，完全沒有頸痛。", "我可以參與所有休閒活動，但有一些頸痛。", "我可以參與大部分休閒活動，但由於頸痛有些不能參與。", "由於頸痛，我只能參與少數休閒活動。", "由於頸痛，我幾乎無法參與任何休閒活動。", "由於頸痛，我完全無法參與任何休閒活動。"] }
+            ],
+            en: [
+                { title: "Section 1: Pain Intensity", options: ["I have no pain at the moment.", "The pain is very mild at the moment.", "The pain is moderate at the moment.", "The pain is fairly severe at the moment.", "The pain is very severe at the moment.", "The pain is the worst imaginable at the moment."] },
+                { title: "Section 2: Personal Care (Washing, Dressing, etc.)", options: ["I can look after myself normally without causing extra pain.", "I can look after myself normally but it causes extra pain.", "It is painful to look after myself and I am slow and careful.", "I need some help but manage most of my personal care.", "I need help every day in most aspects of self care.", "I do not get dressed, I wash with difficulty and stay in bed."] },
+                { title: "Section 3: Lifting", options: ["I can lift heavy weights without extra pain.", "I can lift heavy weights but it gives extra pain.", "Pain prevents me lifting heavy weights off the floor, but I can manage if they are conveniently positioned.", "Pain prevents me from lifting heavy weights, but I can manage light to medium weights if conveniently positioned.", "I can only lift very light weights.", "I cannot lift or carry anything at all."] },
+                { title: "Section 4: Reading", options: ["I can read as much as I want to with no pain in my neck.", "I can read as much as I want to with slight pain in my neck.", "I can read as much as I want to with moderate pain in my neck.", "I can't read as much as I want because of moderate pain in my neck.", "I can hardly read at all because of severe pain in my neck.", "I cannot read at all."] },
+                { title: "Section 5: Headaches", options: ["I have no headaches at all.", "I have slight headaches, which come infrequently.", "I have moderate headaches, which come infrequently.", "I have moderate headaches, which come frequently.", "I have severe headaches, which come frequently.", "I have headaches almost all the time."] },
+                { title: "Section 6: Concentration", options: ["I can concentrate fully when I want to with no difficulty.", "I can concentrate fully when I want to with slight difficulty.", "I have a fair degree of difficulty in concentrating when I want to.", "I have a lot of difficulty in concentrating when I want to.", "I have a great deal of difficulty in concentrating when I want to.", "I cannot concentrate at all."] },
+                { title: "Section 7: Work", options: ["I can do as much work as I want to.", "I can only do my usual work, but no more.", "I can do most of my usual work, but no more.", "I cannot do my usual work.", "I can hardly do any work at all.", "I can't do any work at all."] },
+                { title: "Section 8: Driving", options: ["I can drive my car without any neck pain.", "I can drive my car as long as I want with slight pain in my neck.", "I can drive my car as long as I want with moderate pain in my neck.", "I can't drive my car as long as I want because of moderate pain in my neck.", "I can hardly drive at all because of severe pain in my neck.", "I can't drive my car at all."] },
+                { title: "Section 9: Sleeping", options: ["I have no trouble sleeping.", "My sleep is slightly disturbed (less than 1 hr sleepless).", "My sleep is mildly disturbed (1-2 hrs sleepless).", "My sleep is moderately disturbed (2-3 hrs sleepless).", "My sleep is greatly disturbed (3-5 hrs sleepless).", "My sleep is completely disturbed (5-7 hrs sleepless)."] },
+                { title: "Section 10: Recreation", options: ["I am able to engage in all my recreation activities with no neck pain at all.", "I am able to engage in all my recreation activities, with some pain in my neck.", "I am able to engage in most, but not all, of my usual recreation activities because of pain in my neck.", "I am able to engage in a few of my usual recreation activities because of pain in my neck.", "I can hardly do any recreation activities because of pain in my neck.", "I can't do any recreation activities at all."] }
+            ]
+        };
+
+        const PCS_ITEMS = {
+            zh: [
+                "1. 我一直擔心疼痛是否會結束。",
+                "2. 我覺得自己無法再忍受下去了。",
+                "3. 這太可怕了，我覺得情況永遠不會好轉。",
+                "4. 這太糟糕了，我感覺自己被疼痛淹沒了。",
+                "5. 我覺得自己再也受不了了。",
+                "6. 我開始害怕疼痛會變得更嚴重。",
+                "7. 我一直想到其他疼痛的經歷。",
+                "8. 我非常渴望疼痛快點消失。",
+                "9. 我似乎無法把疼痛從腦海中排除。",
+                "10. 我一直想著到底有多痛。",
+                "11. 我一直想著我多麼希望疼痛停止。",
+                "12. 我無能為力去減輕疼痛的程度。",
+                "13. 我想知道是否會發生什麼嚴重的問題。"
+            ],
+            en: [
+                "1. I worry all the time about whether the pain will end.",
+                "2. I feel I can't go on.",
+                "3. It's terrible and I think it's never going to get any better.",
+                "4. It's awful and I feel that it overwhelms me.",
+                "5. I feel I can't stand it any more.",
+                "6. I become afraid that the pain will get worse.",
+                "7. I keep thinking of other painful events.",
+                "8. I anxiously want the pain to go away.",
+                "9. I can't seem to keep it out of my mind.",
+                "10. I keep thinking about how much it hurts.",
+                "11. I keep thinking about how badly I want the pain to stop.",
+                "12. There's nothing I can do to reduce the intensity of the pain.",
+                "13. I wonder whether something serious may happen."
+            ]
+        };
+
+        const PCS_SCALE_OPTIONS = {
+            zh: [
+                { val: 0, label: "0 - 完全沒有" },
+                { val: 1, label: "1 - 輕微程度" },
+                { val: 2, label: "2 - 中等程度" },
+                { val: 3, label: "3 - 很大程度" },
+                { val: 4, label: "4 - 常常如此" }
+            ],
+            en: [
+                { val: 0, label: "0 - Not at all" },
+                { val: 1, label: "1 - Slight degree" },
+                { val: 2, label: "2 - Moderate degree" },
+                { val: 3, label: "3 - Great degree" },
+                { val: 4, label: "4 - All the time" }
+            ]
+        };
+
+        function isYes(val) {
+            if (!val) return false;
+            const v = String(val).trim().toLowerCase();
+            return v === 'yes' || v === '是' || v === '有';
+        }
+
+        function isNo(val) {
+            if (!val) return false;
+            const v = String(val).trim().toLowerCase();
+            return v === 'no' || v === '否' || v === '沒有';
+        }
+
+        function isMoreThan3Months(val) {
+            if (!val) return false;
+            const v = String(val).trim();
+            return v.includes('三個月以上') || v.includes('More than 3 months') || v.includes('> 3 months');
+        }
+
+        /** Calculate total score for NDI (10 questions, each 0-5 -> max 50 points) */
+        function calculateNDIScore(ndiObj) {
+            if (!ndiObj) return 0;
+            let sum = 0;
+            for (let key in ndiObj) {
+                sum += Number(ndiObj[key]) || 0;
+            }
+            return sum;
+        }
+
+        /** Calculate total score for PCS (13 items, each 0-4 -> max 52 points) */
+        function calculatePCSScore(pcsObj) {
+            if (!pcsObj) return 0;
+            let sum = 0;
+            for (let key in pcsObj) {
+                sum += Number(pcsObj[key]) || 0;
+            }
+            return sum;
+        }
+
+        /**
+         * 1) General Eligibility Screening Evaluation
+         */
+        function evaluateEligibilityScreening(eligibility) {
+            if (!eligibility) return { eligible: false, details: [] };
+
+            const q1 = isYes(eligibility.Q1);
+            const q2 = isYes(eligibility.Q2);
+            const q3 = isYes(eligibility.Q3);
+            const q4 = isYes(eligibility.Q4);
+
+            const q1q2Valid = q1 && q2;
+            const q3q4Valid = q3 || q4;
+            const inclusionValid = q1q2Valid && q3q4Valid;
+
+            let exclusionValid = true;
+            const failedExclusions = [];
+            for (let i = 5; i <= 12; i++) {
+                const val = eligibility[`Q${i}`];
+                if (!isNo(val)) {
+                    exclusionValid = false;
+                    failedExclusions.push(`Q${i}`);
+                }
+            }
+
+            const eligible = inclusionValid && exclusionValid;
+            return {
+                eligible,
+                q1q2Valid,
+                q3q4Valid,
+                inclusionValid,
+                exclusionValid,
+                failedExclusions
+            };
+        }
+
+        /**
+         * 2) Control Group Neck Pain Screening Evaluation
+         */
+        function evaluateControlGroupEligibility(neckPainStatus) {
+            if (!neckPainStatus) return { eligible: false, noOtherPain: false };
+            const noOtherPain = isNo(neckPainStatus.otherPain6Months);
+            return {
+                eligible: noOtherPain,
+                noOtherPain
+            };
+        }
+
+        /**
+         * 3) Neck Pain Group Screening Evaluation
+         * Criteria required:
+         *  - No diagnosed specific cause (c1)
+         *  - Duration > 3 months (c2)
+         *  - Screen exacerbated (c3)
+         *  - Pain intensity > 3 (c4)
+         *  - No co-existing conditions (c5)
+         *  - NDI Score > 10 / 52 (c6_ndiGt10)
+         *  - PCS Score < 30 / 52 (c7_pcsLt30)
+         */
+        function evaluateNeckPainGroupEligibility(neckPainStatus, ndiObj, pcsObj) {
+            if (!neckPainStatus) return { eligible: false };
+
+            const c1_noDiagnosedCause = isNo(neckPainStatus.diagnosedCause);
+            const c2_moreThan3Months = isMoreThan3Months(neckPainStatus.duration);
+            const c3_screenExacerbated = isYes(neckPainStatus.screenExacerbated);
+            const c4_painScoreGt3 = Number(neckPainStatus.intensity) > 3;
+            const c5_noCoexisting = isNo(neckPainStatus.coexistingConditions);
+
+            const ndiScore = calculateNDIScore(ndiObj);
+            const pcsScore = calculatePCSScore(pcsObj);
+
+            // Updated criteria: NDI > 10/52 and PCS < 30/52
+            const c6_ndiGt10 = ndiScore > 10;
+            const c7_pcsLt30 = pcsScore < 30;
+
+            const eligible = c1_noDiagnosedCause && 
+                             c2_moreThan3Months && 
+                             c3_screenExacerbated && 
+                             c4_painScoreGt3 && 
+                             c5_noCoexisting && 
+                             c6_ndiGt10 && 
+                             c7_pcsLt30;
+
+            return {
+                eligible,
+                c1_noDiagnosedCause,
+                c2_moreThan3Months,
+                c3_screenExacerbated,
+                c4_painScoreGt3,
+                c5_noCoexisting,
+                c6_ndiGt10,
+                c7_pcsLt30,
+                ndiScore,
+                pcsScore
+            };
+        }
+
+        /**
+         * Overall Participant Evaluation
+         */
+        function evaluateParticipant(item) {
+            const genEval = evaluateEligibilityScreening(item.eligibility);
+            const isPain = item.neckPainStatus?.hasPain;
+            
+            let groupEval = null;
+            if (isPain) {
+                groupEval = evaluateNeckPainGroupEligibility(item.neckPainStatus, item.ndi, item.pcs);
+            } else {
+                groupEval = evaluateControlGroupEligibility(item.neckPainStatus);
+            }
+
+            const overallEligible = genEval.eligible && groupEval.eligible;
+
+            return {
+                genEval,
+                groupEval,
+                isPain,
+                overallEligible
+            };
+        }
+
+        function setFontSize(size) {
+            currentFontSize = size;
+            const htmlEl = document.documentElement;
+            htmlEl.classList.remove('text-size-regular', 'text-size-large', 'text-size-xlarge');
+            htmlEl.classList.add(`text-size-${size}`);
+
+            ['regular', 'large', 'xlarge'].forEach(s => {
+                const btn = document.getElementById(`fontBtn-${s}`);
+                if (btn) {
+                    if (s === size) {
+                        btn.className = "px-2 py-1 rounded bg-white text-polyu-800 font-bold shadow-xs transition text-xs";
+                    } else {
+                        btn.className = "px-2 py-1 rounded hover:bg-white/20 text-rose-100 font-medium transition text-xs";
+                    }
+                }
+            });
+        }
+
+        function handleOperatorLogin(e) {
+            e.preventDefault();
+            const pwd = document.getElementById('passcodeInput').value;
+            const errEl = document.getElementById('passcodeError');
+
+            if (pwd === getOperatorPasscode()) {
+                isOperatorLoggedIn = true;
+                closeOperatorModal();
+                showOperatorDashboard();
+            } else {
+                errEl.textContent = 'Incorrect passcode! Please re-type valid passcode.';
+                errEl.classList.remove('hidden');
+            }
+        }
+
+        function openChangePasscodeModal() {
+            document.getElementById('oldPasscodeInput').value = '';
+            document.getElementById('newPasscodeInput').value = '';
+            document.getElementById('confirmPasscodeInput').value = '';
+            const msgEl = document.getElementById('changePasscodeMsg');
+            msgEl.className = "text-xs font-medium hidden";
+            document.getElementById('changePasscodeModal').classList.remove('hidden');
+        }
+
+        function closeChangePasscodeModal() {
+            document.getElementById('changePasscodeModal').classList.add('hidden');
+        }
+
+        function handleChangePasscode(e) {
+            e.preventDefault();
+            const oldPwd = document.getElementById('oldPasscodeInput').value;
+            const newPwd = document.getElementById('newPasscodeInput').value;
+            const confirmPwd = document.getElementById('confirmPasscodeInput').value;
+            const msgEl = document.getElementById('changePasscodeMsg');
+
+            if (oldPwd !== getOperatorPasscode()) {
+                msgEl.textContent = 'Current passcode is incorrect! Verification failed.';
+                msgEl.className = 'text-xs font-semibold text-rose-600 block';
+                return;
+            }
+
+            if (newPwd !== confirmPwd) {
+                msgEl.textContent = 'New passcode and confirm passcode do not match!';
+                msgEl.className = 'text-xs font-semibold text-rose-600 block';
+                return;
+            }
+
+            if (newPwd.length < 8) {
+                msgEl.textContent = 'New passcode must be at least 8 characters long.';
+                msgEl.className = 'text-xs font-semibold text-rose-600 block';
+                return;
+            }
+
+            setOperatorPasscode(newPwd);
+
+            msgEl.textContent = 'Passcode updated successfully!';
+            msgEl.className = 'text-xs font-semibold text-emerald-600 block';
+
+            setTimeout(() => {
+                closeChangePasscodeModal();
+            }, 1200);
+        }
+
+        function selectLanguage(lang) {
+            selectedLang = lang;
+            formData.lang = lang;
+
+            const btnZh = document.getElementById('langBtnZh');
+            const btnEn = document.getElementById('langBtnEn');
+            if (btnZh && btnEn) {
+                if (lang === 'zh') {
+                    btnZh.className = "flex-1 py-3.5 px-6 rounded-xl border-2 border-polyu-800 bg-polyu-50 text-polyu-800 font-bold transition flex items-center justify-center space-x-2";
+                    btnEn.className = "flex-1 py-3.5 px-6 rounded-xl border-2 border-slate-300 hover:border-polyu-800 text-slate-800 font-bold transition flex items-center justify-center space-x-2";
+                } else {
+                    btnEn.className = "flex-1 py-3.5 px-6 rounded-xl border-2 border-polyu-800 bg-polyu-50 text-polyu-800 font-bold transition flex items-center justify-center space-x-2";
+                    btnZh.className = "flex-1 py-3.5 px-6 rounded-xl border-2 border-slate-300 hover:border-polyu-800 text-slate-800 font-bold transition flex items-center justify-center space-x-2";
+                }
+            }
+
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.getAttribute('data-i18n');
+                if (I18N_TEXT[lang] && I18N_TEXT[lang][key]) {
+                    el.textContent = I18N_TEXT[lang][key];
+                }
+            });
+
+            renderSection1Options();
+            renderSection2Questions();
+            renderSection3Questions();
+            renderSection4NDI();
+            renderSection5PCS();
+        }
+
+        function startQuestionnaire() {
+            document.getElementById('stepperContainer').classList.remove('hidden');
+            goToSection(1);
+        }
+
+        function renderSection1Options() {
+            const container = document.getElementById('eduOptionsContainer');
+            const t = I18N_TEXT[selectedLang];
+            const choices = [
+                { id: 'none', label: t.edu_none },
+                { id: 'primary', label: t.edu_primary },
+                { id: 'secondary', label: t.edu_secondary },
+                { id: 'degree', label: t.edu_degree }
+            ];
+
+            container.innerHTML = choices.map(c => `
+                <div class="radio-card">
+                    <input type="radio" id="edu_${c.id}" name="s1_education" value="${c.label}" class="hidden">
+                    <label for="edu_${c.id}" class="block p-3 border border-slate-300 rounded-lg text-sm text-center cursor-pointer hover:border-slate-400 font-medium">
+                        ${c.label}
+                    </label>
+                </div>
+            `).join('');
+        }
+
+        function renderSection2Questions() {
+            const container = document.getElementById('s2QuestionsList');
+            const statements = ELIGIBILITY_STATEMENTS[selectedLang];
+
+            container.innerHTML = statements.map((stmt, idx) => `
+                <div class="p-4 bg-slate-50 rounded-xl border border-slate-200 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+                    <div class="text-sm font-medium text-slate-800 flex items-start space-x-2">
+                        <span class="font-bold text-polyu-800">${idx + 1}.</span>
+                        <span>${stmt}</span>
+                    </div>
+                    <div class="flex items-center space-x-3 shrink-0 ml-6 sm:ml-0">
+                        <label class="flex items-center space-x-1 cursor-pointer bg-white px-3 py-1.5 border border-slate-300 rounded-lg text-xs font-semibold hover:border-polyu-800">
+                            <input type="radio" name="s2_q_${idx}" value="Yes" class="accent-polyu-800">
+                            <span>${selectedLang === 'zh' ? '是' : 'Yes'}</span>
+                        </label>
+                        <label class="flex items-center space-x-1 cursor-pointer bg-white px-3 py-1.5 border border-slate-300 rounded-lg text-xs font-semibold hover:border-polyu-800">
+                            <input type="radio" name="s2_q_${idx}" value="No" class="accent-polyu-800">
+                            <span>${selectedLang === 'zh' ? '否' : 'No'}</span>
+                        </label>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function renderSection3Questions() {
+            const t = I18N_TEXT[selectedLang];
+
+            document.getElementById('s3_q1_box').innerHTML = `
+                <label class="block font-semibold text-sm text-slate-900 mb-2">${t.s3_q1}</label>
+                <div class="flex space-x-4 text-xs font-semibold">
+                    <label class="cursor-pointer bg-slate-50 px-3 py-2 border rounded-lg hover:border-polyu-800 flex items-center space-x-2">
+                        <input type="radio" name="s3_q1" value="${selectedLang === 'zh' ? '有' : 'Yes'}" class="accent-polyu-800">
+                        <span>${selectedLang === 'zh' ? '有' : 'Yes'}</span>
+                    </label>
+                    <label class="cursor-pointer bg-slate-50 px-3 py-2 border rounded-lg hover:border-polyu-800 flex items-center space-x-2">
+                        <input type="radio" name="s3_q1" value="${selectedLang === 'zh' ? '沒有' : 'No'}" class="accent-polyu-800">
+                        <span>${selectedLang === 'zh' ? '沒有' : 'No'}</span>
+                    </label>
+                </div>
+            `;
+
+            document.getElementById('s3_q2_box').innerHTML = `
+                <label class="block font-semibold text-sm text-slate-900 mb-2">${t.s3_q2}</label>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs font-medium">
+                    ${[t.s3_q2_opt1, t.s3_q2_opt2, t.s3_q2_opt3, t.s3_q2_opt4].map((opt, i) => `
+                        <label class="cursor-pointer bg-slate-50 p-2.5 border rounded-lg hover:border-polyu-800 flex items-center space-x-2">
+                            <input type="radio" name="s3_q2" value="${opt}" class="accent-polyu-800">
+                            <span>${opt}</span>
+                        </label>
+                    `).join('')}
+                </div>
+            `;
+
+            document.getElementById('s3_q3_box').innerHTML = `
+                <label class="block font-semibold text-sm text-slate-900 mb-2">${t.s3_q3}</label>
+                <div class="flex space-x-4 text-xs font-semibold">
+                    <label class="cursor-pointer bg-slate-50 px-3 py-2 border rounded-lg hover:border-polyu-800 flex items-center space-x-2">
+                        <input type="radio" name="s3_q3" value="${selectedLang === 'zh' ? '是' : 'Yes'}" class="accent-polyu-800">
+                        <span>${selectedLang === 'zh' ? '是' : 'Yes'}</span>
+                    </label>
+                    <label class="cursor-pointer bg-slate-50 px-3 py-2 border rounded-lg hover:border-polyu-800 flex items-center space-x-2">
+                        <input type="radio" name="s3_q3" value="${selectedLang === 'zh' ? '否' : 'No'}" class="accent-polyu-800">
+                        <span>${selectedLang === 'zh' ? '否' : 'No'}</span>
+                    </label>
+                </div>
+            `;
+
+            document.getElementById('s3_q4_box').innerHTML = `
+                <label class="block font-semibold text-sm text-slate-900 mb-2">${t.s3_q4}</label>
+                <div class="flex items-center space-x-3">
+                    <input type="range" id="s3_intensity_slider" min="0" max="10" value="0" oninput="document.getElementById('intensityVal').textContent = this.value" class="w-full accent-polyu-800">
+                    <span class="w-10 text-center font-bold text-lg text-polyu-800 bg-polyu-50 py-1 border border-polyu-200 rounded-lg" id="intensityVal">0</span>
+                </div>
+            `;
+
+            document.getElementById('s3_q5_box').innerHTML = `
+                <label class="block font-semibold text-sm text-slate-900 mb-2">${t.s3_q5}</label>
+                <div class="flex space-x-4 text-xs font-semibold">
+                    <label class="cursor-pointer bg-slate-50 px-3 py-2 border rounded-lg hover:border-polyu-800 flex items-center space-x-2">
+                        <input type="radio" name="s3_q5" value="${selectedLang === 'zh' ? '是' : 'Yes'}" class="accent-polyu-800">
+                        <span>${selectedLang === 'zh' ? '是' : 'Yes'}</span>
+                    </label>
+                    <label class="cursor-pointer bg-slate-50 px-3 py-2 border rounded-lg hover:border-polyu-800 flex items-center space-x-2">
+                        <input type="radio" name="s3_q5" value="${selectedLang === 'zh' ? '否' : 'No'}" class="accent-polyu-800">
+                        <span>${selectedLang === 'zh' ? '否' : 'No'}</span>
+                    </label>
+                </div>
+            `;
+
+            document.getElementById('s3_other_pain_box').innerHTML = `
+                <label class="block font-semibold text-sm text-slate-900 mb-2">${t.s3_other_pain}</label>
+                <div class="flex space-x-4 text-xs font-semibold">
+                    <label class="cursor-pointer bg-white px-3 py-2 border rounded-lg hover:border-polyu-800 flex items-center space-x-2">
+                        <input type="radio" name="s3_other_pain" value="${selectedLang === 'zh' ? '有' : 'Yes'}" class="accent-polyu-800">
+                        <span>${selectedLang === 'zh' ? '有' : 'Yes'}</span>
+                    </label>
+                    <label class="cursor-pointer bg-white px-3 py-2 border rounded-lg hover:border-polyu-800 flex items-center space-x-2">
+                        <input type="radio" name="s3_other_pain" value="${selectedLang === 'zh' ? '沒有' : 'No'}" class="accent-polyu-800">
+                        <span>${selectedLang === 'zh' ? '沒有' : 'No'}</span>
+                    </label>
+                </div>
+            `;
+        }
+
+        function toggleNeckPainBranch(val) {
+            hasNeckPain = (val === 'yes');
+            formData.neckPainStatus.hasPain = hasNeckPain;
+
+            const yesBranch = document.getElementById('s3_yes_branch');
+            const noBranch = document.getElementById('s3_no_branch');
+
+            if (hasNeckPain) {
+                yesBranch.classList.remove('hidden');
+                noBranch.classList.add('hidden');
+                document.getElementById('stepWrapper-4').style.display = 'flex';
+                document.getElementById('stepWrapper-5').style.display = 'flex';
+            } else {
+                yesBranch.classList.add('hidden');
+                noBranch.classList.remove('hidden');
+                document.getElementById('stepWrapper-4').style.display = 'none';
+                document.getElementById('stepWrapper-5').style.display = 'none';
+            }
+        }
+
+        function renderSection4NDI() {
+            const container = document.getElementById('ndiQuestionsContainer');
+            const ndiSections = NDI_DATA[selectedLang];
+
+            container.innerHTML = ndiSections.map((sec, secIdx) => `
+                <div class="bg-slate-50 p-5 rounded-xl border border-slate-200">
+                    <h4 class="font-bold text-slate-900 text-sm mb-3 text-polyu-800">${sec.title}</h4>
+                    <div class="space-y-2">
+                        ${sec.options.map((opt, optIdx) => `
+                            <label class="flex items-start space-x-3 p-2.5 bg-white border border-slate-200 rounded-lg hover:border-polyu-800 cursor-pointer text-xs transition">
+                                <input type="radio" name="ndi_sec_${secIdx}" value="${optIdx}" class="mt-0.5 accent-polyu-800 shrink-0">
+                                <span class="text-slate-700 leading-snug">${opt}</span>
+                            </label>
+                        `).join('')}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function renderSection5PCS() {
+            const container = document.getElementById('pcsQuestionsContainer');
+            const items = PCS_ITEMS[selectedLang];
+            const scales = PCS_SCALE_OPTIONS[selectedLang];
+
+            container.innerHTML = items.map((itemText, itemIdx) => `
+                <div class="bg-slate-50 p-4 rounded-xl border border-slate-200">
+                    <p class="font-semibold text-slate-800 text-xs mb-3">${itemText}</p>
+                    <div class="grid grid-cols-2 sm:grid-cols-5 gap-2">
+                        ${scales.map(sc => `
+                            <label class="flex items-center justify-center p-2 bg-white border border-slate-200 rounded-lg hover:border-polyu-800 cursor-pointer text-[11px] text-center font-medium">
+                                <input type="radio" name="pcs_item_${itemIdx}" value="${sc.val}" class="accent-polyu-800 mr-1.5">
+                                <span>${sc.label}</span>
+                            </label>
+                        `).join('')}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function goToSection(secNum) {
+            hideValidationBanner();
+
+            for (let i = 0; i <= 6; i++) {
+                const el = document.getElementById(`section-${i}`);
+                if (el) el.classList.add('hidden');
+            }
+
+            const target = document.getElementById(`section-${secNum}`);
+            if (target) target.classList.remove('hidden');
+
+            currentSection = secNum;
+            updateStepperUI();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function updateStepperUI() {
+            for (let i = 1; i <= 6; i++) {
+                const circle = document.getElementById(`stepCircle-${i}`);
+                if (!circle) continue;
+
+                if (i < currentSection) {
+                    circle.className = "w-8 h-8 rounded-full border-2 flex items-center justify-center font-bold text-xs step-done shadow-sm";
+                    circle.innerHTML = '<i class="fa-solid fa-check"></i>';
+                } else if (i === currentSection) {
+                    circle.className = "w-8 h-8 rounded-full border-2 flex items-center justify-center font-bold text-xs step-active shadow-sm";
+                    circle.textContent = i;
+                } else {
+                    circle.className = "w-8 h-8 rounded-full border-2 flex items-center justify-center font-bold text-xs step-pending shadow-sm";
+                    circle.textContent = i;
+                }
+            }
+
+            const maxVisibleSteps = hasNeckPain ? 6 : 4;
+            const progressPct = Math.min(100, Math.max(0, ((currentSection - 1) / (maxVisibleSteps - 1)) * 100));
+            document.getElementById('progressLine').style.width = `${progressPct}%`;
+        }
+
+        function showValidationBanner(msg) {
+            const banner = document.getElementById('validationBanner');
+            const msgEl = document.getElementById('validationMsg');
+            msgEl.textContent = msg || (selectedLang === 'zh' ? '請回答本頁所有必填問題後方可進入下一頁。' : 'Please complete all required questions before proceeding.');
+            banner.classList.remove('hidden');
+            banner.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+
+        function hideValidationBanner() {
+            document.getElementById('validationBanner').classList.add('hidden');
+        }
+
+        function validateAndNext(secNum) {
+            hideValidationBanner();
+
+            if (secNum === 1) {
+                const name = document.getElementById('s1_name_input').value.trim();
+                const age = document.getElementById('s1_age_input').value.trim();
+                const email = document.getElementById('s1_email_input').value.trim();
+                const eduEl = document.querySelector('input[name="s1_education"]:checked');
+
+                if (!name || !age || !email || !eduEl) {
+                    showValidationBanner(selectedLang === 'zh' ? '請完整填寫姓名、年齡、電郵及教育程度。' : 'Please complete name, age, email, and level of education.');
+                    return;
+                }
+
+                const ageNum = parseInt(age, 10);
+                if (isNaN(ageNum) || ageNum < 18 || ageNum > 40) {
+                    showValidationBanner(selectedLang === 'zh' ? '請輸入有效的年齡（必須介乎 18 至 40 歲之間）。' : 'Please enter a valid age between 18 and 40.');
+                    return;
+                }
+
+                const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                if (!emailRegex.test(email)) {
+                    showValidationBanner(selectedLang === 'zh' ? '請輸入有效的電郵地址格式（例如 name@example.com）。' : 'Please enter a valid email address format (e.g. name@example.com).');
+                    return;
+                }
+
+                formData.demographics = { name, age: ageNum, email, education: eduEl.value };
+                goToSection(2);
+
+            } else if (secNum === 2) {
+                const statements = ELIGIBILITY_STATEMENTS[selectedLang];
+                const responses = {};
+                for (let i = 0; i < statements.length; i++) {
+                    const sel = document.querySelector(`input[name="s2_q_${i}"]:checked`);
+                    if (!sel) {
+                        showValidationBanner(selectedLang === 'zh' ? `請回答第 ${i + 1} 條資格篩查問題。` : `Please answer question ${i + 1} in eligibility screening.`);
+                        return;
+                    }
+                    responses[`Q${i + 1}`] = sel.value;
+                }
+                formData.eligibility = responses;
+                goToSection(3);
+
+            } else if (secNum === 3) {
+                const painChoice = document.querySelector('input[name="s3_has_pain"]:checked');
+                if (!painChoice) {
+                    showValidationBanner(selectedLang === 'zh' ? '請選擇你在過去6個月內有否感到頸痛。' : 'Please select whether you experience any neck pain in the past 6 months.');
+                    return;
+                }
+
+                if (hasNeckPain) {
+                    const q1 = document.querySelector('input[name="s3_q1"]:checked');
+                    const q2 = document.querySelector('input[name="s3_q2"]:checked');
+                    const q3 = document.querySelector('input[name="s3_q3"]:checked');
+                    const q5 = document.querySelector('input[name="s3_q5"]:checked');
+                    const intensity = document.getElementById('s3_intensity_slider').value;
+
+                    if (!q1 || !q2 || !q3 || !q5) {
+                        showValidationBanner(selectedLang === 'zh' ? '請完整回答所有頸痛相關細節問題。' : 'Please answer all neck pain detail questions.');
+                        return;
+                    }
+
+                    formData.neckPainStatus = {
+                        hasPain: true,
+                        diagnosedCause: q1.value,
+                        duration: q2.value,
+                        screenExacerbated: q3.value,
+                        intensity: parseInt(intensity),
+                        coexistingConditions: q5.value,
+                        otherPain6Months: 'N/A'
+                    };
+                    goToSection(4);
+                } else {
+                    const otherPain = document.querySelector('input[name="s3_other_pain"]:checked');
+                    if (!otherPain) {
+                        showValidationBanner(selectedLang === 'zh' ? '請回答過去6個月內其他部位疼痛狀況。' : 'Please answer whether you experienced pain in other body parts.');
+                        return;
+                    }
+
+                    formData.neckPainStatus = {
+                        hasPain: false,
+                        diagnosedCause: 'N/A',
+                        duration: 'N/A',
+                        screenExacerbated: 'N/A',
+                        intensity: 0,
+                        coexistingConditions: 'N/A',
+                        otherPain6Months: otherPain.value
+                    };
+                    submitQuestionnaire();
+                }
+
+            } else if (secNum === 4) {
+                const ndiResponses = {};
+                for (let i = 0; i < 10; i++) {
+                    const sel = document.querySelector(`input[name="ndi_sec_${i}"]:checked`);
+                    if (!sel) {
+                        showValidationBanner(selectedLang === 'zh' ? `請回答 NDI 第 ${i + 1} 部分。` : `Please complete section ${i + 1} of NDI.`);
+                        return;
+                    }
+                    ndiResponses[`Sec_${i + 1}`] = parseInt(sel.value);
+                }
+                formData.ndi = ndiResponses;
+                goToSection(5);
+            }
+        }
+
+        function submitQuestionnaire() {
+            if (hasNeckPain) {
+                const pcsResponses = {};
+                for (let i = 0; i < 13; i++) {
+                    const sel = document.querySelector(`input[name="pcs_item_${i}"]:checked`);
+                    if (!sel) {
+                        showValidationBanner(selectedLang === 'zh' ? `請回答 PCS 第 ${i + 1} 題。` : `Please answer item ${i + 1} of PCS.`);
+                        return;
+                    }
+                    pcsResponses[`Item_${i + 1}`] = parseInt(sel.value);
+                }
+                formData.pcs = pcsResponses;
+            } else {
+                formData.ndi = {};
+                formData.pcs = {};
+            }
+
+            formData.id = getNextRespondentId();
+            formData.timestamp = new Date().toLocaleString('zh-HK');
+
+            const existing = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+            existing.push(formData);
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(existing));
+
+            document.getElementById('s6_msg').textContent = I18N_TEXT[selectedLang].sec6_msg;
+            goToSection(6);
+        }
+
+        function restartForm() {
+            formData = {
+                id: '',
+                timestamp: '',
+                lang: selectedLang,
+                demographics: { name: '', age: '', email: '', education: '' },
+                eligibility: {},
+                neckPainStatus: {},
+                ndi: {},
+                pcs: {}
+            };
+            document.getElementById('s1_name_input').value = '';
+            document.getElementById('s1_age_input').value = '';
+            document.getElementById('s1_email_input').value = '';
+            
+            goToSection(0);
+        }
+
+        function toggleModeClick() {
+            if (isOperatorLoggedIn) {
+                showOperatorDashboard();
+            } else {
+                openOperatorModal();
+            }
+        }
+
+        function openOperatorModal() {
+            document.getElementById('passcodeInput').value = '';
+            document.getElementById('passcodeError').classList.add('hidden');
+            document.getElementById('operatorModal').classList.remove('hidden');
+        }
+
+        function closeOperatorModal() {
+            document.getElementById('operatorModal').classList.add('hidden');
+        }
+
+        function showOperatorDashboard() {
+            document.getElementById('respondentView').classList.add('hidden');
+            document.getElementById('operatorDashboard').classList.remove('hidden');
+            document.getElementById('modeBtnText').textContent = 'Operator Dashboard (Active)';
+            renderOperatorTable();
+        }
+
+        function exitOperatorMode() {
+            isOperatorLoggedIn = false;
+            document.getElementById('operatorDashboard').classList.add('hidden');
+            document.getElementById('respondentView').classList.remove('hidden');
+            document.getElementById('modeBtnText').textContent = 'Operator Mode / 操作員模式';
+            goToSection(0);
+        }
+
+        function renderOperatorTable() {
+            const data = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+            const tbody = document.getElementById('responsesTableBody');
+
+            let total = data.length;
+            let painCount = 0;
+            let controlCount = 0;
+            let eligibleCount = 0;
+
+            tbody.innerHTML = '';
+
+            if (data.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="8" class="text-center py-8 text-slate-400">
+                            No research submissions recorded yet. Click "Add Sample Demo Data" below to test operator reports.
+                        </td>
+                    </tr>
+                `;
+            } else {
+                data.forEach((item, index) => {
+                    const isPain = item.neckPainStatus?.hasPain;
+                    if (isPain) painCount++; else controlCount++;
+
+                    const evalRes = evaluateParticipant(item);
+                    if (evalRes.overallEligible) eligibleCount++;
+
+                    const genBadge = evalRes.genEval.eligible 
+                        ? `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300">Eligible</span>`
+                        : `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-100 text-rose-800 border border-rose-300">Ineligible</span>`;
+
+                    const groupBadge = evalRes.groupEval.eligible
+                        ? `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300">Eligible</span>`
+                        : `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-100 text-rose-800 border border-rose-300">Ineligible</span>`;
+
+                    const overallBadge = evalRes.overallEligible
+                        ? `<span class="px-2.5 py-1 rounded-lg text-xs font-bold bg-emerald-700 text-white shadow-xs"><i class="fa-solid fa-check mr-1"></i>ELIGIBLE</span>`
+                        : `<span class="px-2.5 py-1 rounded-lg text-xs font-bold bg-rose-700 text-white shadow-xs"><i class="fa-solid fa-xmark mr-1"></i>INELIGIBLE</span>`;
+
+                    const groupText = isPain ? '<span class="font-semibold text-rose-800">Neck Pain Group</span>' : '<span class="font-semibold text-sky-800">Healthy Control</span>';
+
+                    const row = document.createElement('tr');
+                    row.className = 'hover:bg-slate-50 transition';
+                    row.innerHTML = `
+                        <td class="p-3">
+                            <div class="font-bold text-slate-900">#${item.id}</div>
+                            <div class="text-[10px] text-slate-400">${item.timestamp}</div>
+                        </td>
+                        <td class="p-3">
+                            <div class="font-semibold text-slate-800">${item.demographics.name}</div>
+                            <div class="text-[10px] text-slate-500">${item.demographics.email}</div>
+                        </td>
+                        <td class="p-3 font-medium text-slate-700">${item.demographics.age}</td>
+                        <td class="p-3 text-xs">${groupText}</td>
+                        <td class="p-3">${genBadge}</td>
+                        <td class="p-3">${groupBadge}</td>
+                        <td class="p-3">${overallBadge}</td>
+                        <td class="p-3 text-right space-x-1">
+                            <button onclick="openDetailModal(${index})" class="bg-polyu-800 hover:bg-polyu-900 text-white px-2.5 py-1 rounded text-xs font-semibold shadow-xs transition">
+                                <i class="fa-solid fa-file-lines mr-1"></i>View Report
+                            </button>
+                            <button onclick="deleteSubmission(${index})" class="text-slate-400 hover:text-rose-600 px-1.5 py-1 transition" title="Delete">
+                                <i class="fa-solid fa-trash-can"></i>
+                            </button>
+                        </td>
+                    `;
+                    tbody.appendChild(row);
+                });
+            }
+
+            document.getElementById('statTotal').textContent = total;
+            document.getElementById('statEligible').textContent = eligibleCount;
+            document.getElementById('statGroupBreakdown').textContent = `${painCount} / ${controlCount}`;
+            document.getElementById('recordCountBadge').textContent = `${total} Responses`;
+        }
+
+        function filterTable() {
+            const input = document.getElementById('tableSearch').value.toLowerCase();
+            const rows = document.querySelectorAll('#responsesTableBody tr');
+            rows.forEach(row => {
+                const text = row.innerText.toLowerCase();
+                if (text.includes(input)) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+        }
+
+        /**
+         * Participant Detail Report View ("View Report")
+         * Displays:
+         *  - Personal Demographics
+         *  - Eligibility Screening Details (12 items)
+         *  - Group Specific Screening Results (including NDI > 10/52 and PCS < 30/52)
+         *  - Answer for every question in NDI (10 Sections)
+         *  - Answer for every question in PCS (13 Items)
+         */
+        function openDetailModal(index) {
+            const data = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+            const item = data[index];
+            if (!item) return;
+
+            const evalRes = evaluateParticipant(item);
+            const isPain = item.neckPainStatus?.hasPain;
+            const lang = item.lang || 'zh';
+
+            document.getElementById('detailModalTitle').textContent = `Participant Submission Report #${item.id} - ${item.demographics.name}`;
+            document.getElementById('detailModalSubTitle').textContent = `Submitted on: ${item.timestamp} | Language: ${lang === 'zh' ? '繁體中文' : 'English'}`;
+
+            const container = document.getElementById('detailModalContent');
+
+            // Overall Status Banner
+            const overallBadge = evalRes.overallEligible
+                ? `<div class="bg-emerald-50 border-2 border-emerald-500 text-emerald-900 p-3 rounded-xl flex items-center justify-between font-bold">
+                    <span class="flex items-center"><i class="fa-solid fa-circle-check text-emerald-600 text-lg mr-2"></i> Overall Status: FULLY ELIGIBLE</span>
+                    <span class="bg-emerald-600 text-white text-xs px-3 py-1 rounded-full uppercase">Pass All Criteria</span>
+                   </div>`
+                : `<div class="bg-rose-50 border-2 border-rose-500 text-rose-900 p-3 rounded-xl flex items-center justify-between font-bold">
+                    <span class="flex items-center"><i class="fa-solid fa-circle-xmark text-rose-600 text-lg mr-2"></i> Overall Status: INELIGIBLE</span>
+                    <span class="bg-rose-600 text-white text-xs px-3 py-1 rounded-full uppercase">Criteria Not Met</span>
+                   </div>`;
+
+            // Section 1: Demographics
+            const demographicsHtml = `
+                <div class="bg-slate-50 p-4 rounded-xl border border-slate-200">
+                    <h4 class="font-bold text-slate-900 text-xs uppercase tracking-wider mb-2 text-polyu-800 border-b pb-1">1. Personal Demographics</h4>
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+                        <div><span class="text-slate-500 block">Name:</span> <span class="font-bold text-slate-900">${item.demographics.name}</span></div>
+                        <div><span class="text-slate-500 block">Age:</span> <span class="font-bold text-slate-900">${item.demographics.age} years old</span></div>
+                        <div><span class="text-slate-500 block">Email:</span> <span class="font-bold text-slate-900">${item.demographics.email}</span></div>
+                        <div><span class="text-slate-500 block">Education:</span> <span class="font-bold text-slate-900">${item.demographics.education}</span></div>
+                    </div>
+                </div>
+            `;
+
+            // Section 2: General Eligibility Screening Details (12 Items)
+            const statements = ELIGIBILITY_STATEMENTS[lang] || ELIGIBILITY_STATEMENTS['zh'];
+            const descriptions = ELIGIBILITY_DESCRIPTIONS[lang] || ELIGIBILITY_DESCRIPTIONS['zh'];
+            
+            let eligRows = '';
+            for (let i = 1; i <= 12; i++) {
+                const ans = item.eligibility[`Q${i}`] || 'N/A';
+                let isPass = false;
+
+                if (i === 1 || i === 2) {
+                    isPass = isYes(ans);
+                } else if (i === 3 || i === 4) {
+                    isPass = isYes(ans);
+                } else {
+                    isPass = isNo(ans);
+                }
+
+                const passBadge = isPass
+                    ? `<span class="text-emerald-700 font-bold bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">PASS (${ans})</span>`
+                    : `<span class="text-rose-700 font-bold bg-rose-50 px-2 py-0.5 rounded border border-rose-200">FAIL (${ans})</span>`;
+
+                eligRows += `
+                    <tr class="border-b border-slate-200">
+                        <td class="py-1.5 px-2 font-medium text-slate-700">${descriptions[i - 1]}</td>
+                        <td class="py-1.5 px-2 text-center font-semibold text-slate-900">${ans}</td>
+                        <td class="py-1.5 px-2 text-right">${passBadge}</td>
+                    </tr>
+                `;
+            }
+
+            const genScreeningHtml = `
+                <div class="bg-slate-50 p-4 rounded-xl border border-slate-200">
+                    <div class="flex justify-between items-center border-b pb-1 mb-3">
+                        <h4 class="font-bold text-slate-900 text-xs uppercase tracking-wider text-polyu-800">2. Eligibility Screening Details (12 Statements)</h4>
+                        <span class="${evalRes.genEval.eligible ? 'text-emerald-700 font-bold' : 'text-rose-700 font-bold'}">
+                            Result: ${evalRes.genEval.eligible ? 'PASS' : 'FAIL'}
+                        </span>
+                    </div>
+                    <table class="w-full text-xs">
+                        <thead class="bg-slate-100 text-slate-600 font-bold uppercase text-[10px]">
+                            <tr>
+                                <th class="p-2 text-left">Screening Criteria</th>
+                                <th class="p-2 text-center w-20">Answer</th>
+                                <th class="p-2 text-right w-24">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>${eligRows}</tbody>
+                    </table>
+                </div>
+            `;
+
+            // Section 3: Group Specific Criteria Evaluation Details
+            let groupCriteriaHtml = '';
+            if (isPain) {
+                const g = evalRes.groupEval;
+                const c1 = g.c1_noDiagnosedCause ? '<span class="text-emerald-700 font-bold">PASS (No diagnosed cause)</span>' : '<span class="text-rose-700 font-bold">FAIL (Diagnosed cause present)</span>';
+                const c2 = g.c2_moreThan3Months ? '<span class="text-emerald-700 font-bold">PASS (> 3 months)</span>' : '<span class="text-rose-700 font-bold">FAIL (≤ 3 months)</span>';
+                const c3 = g.c3_screenExacerbated ? '<span class="text-emerald-700 font-bold">PASS (Yes)</span>' : '<span class="text-rose-700 font-bold">FAIL (No)</span>';
+                const c4 = g.c4_painScoreGt3 ? `<span class="text-emerald-700 font-bold">PASS (Intensity: ${item.neckPainStatus.intensity}/10 > 3)</span>` : `<span class="text-rose-700 font-bold">FAIL (Intensity: ${item.neckPainStatus.intensity}/10 ≤ 3)</span>`;
+                const c5 = g.c5_noCoexisting ? '<span class="text-emerald-700 font-bold">PASS (No co-existing conditions)</span>' : '<span class="text-rose-700 font-bold">FAIL (Has co-existing conditions)</span>';
+                
+                // Explicit NDI > 10/52 and PCS < 30/52 details
+                const c6 = g.c6_ndiGt10 ? `<span class="text-emerald-700 font-bold">PASS (Score: ${g.ndiScore} / 50 > 10/52)</span>` : `<span class="text-rose-700 font-bold">FAIL (Score: ${g.ndiScore} / 50 ≤ 10/52)</span>`;
+                const c7 = g.c7_pcsLt30 ? `<span class="text-emerald-700 font-bold">PASS (Score: ${g.pcsScore} / 52 < 30/52)</span>` : `<span class="text-rose-700 font-bold">FAIL (Score: ${g.pcsScore} / 52 ≥ 30/52)</span>`;
+
+                groupCriteriaHtml = `
+                    <div class="bg-rose-50/60 p-4 rounded-xl border border-rose-200">
+                        <div class="flex justify-between items-center border-b border-rose-200 pb-1 mb-3">
+                            <h4 class="font-bold text-rose-900 text-xs uppercase tracking-wider">3. Neck Pain Group Screening Results</h4>
+                            <span class="${g.eligible ? 'text-emerald-700 font-bold' : 'text-rose-700 font-bold'}">
+                                Result: ${g.eligible ? 'PASS (Eligible for Neck Pain Group)' : 'FAIL (Ineligible)'}
+                            </span>
+                        </div>
+                        <div class="space-y-2 text-xs">
+                            <div class="flex justify-between bg-white p-2 rounded border border-rose-100">
+                                <span class="font-medium text-slate-700">1. Diagnosed specific cause absent (e.g. whiplash, fracture, disc herniation):</span>
+                                <div>${c1}</div>
+                            </div>
+                            <div class="flex justify-between bg-white p-2 rounded border border-rose-100">
+                                <span class="font-medium text-slate-700">2. Neck pain duration > 3 months:</span>
+                                <div>${c2}</div>
+                            </div>
+                            <div class="flex justify-between bg-white p-2 rounded border border-rose-100">
+                                <span class="font-medium text-slate-700">3. Exacerbated by screen work, relieved by rest/stretch:</span>
+                                <div>${c3}</div>
+                            </div>
+                            <div class="flex justify-between bg-white p-2 rounded border border-rose-100">
+                                <span class="font-medium text-slate-700">4. Pain score over past week > 3 / 10:</span>
+                                <div>${c4}</div>
+                            </div>
+                            <div class="flex justify-between bg-white p-2 rounded border border-rose-100">
+                                <span class="font-medium text-slate-700">5. Free of co-existing upper limb/systemic condition:</span>
+                                <div>${c5}</div>
+                            </div>
+                            <div class="flex justify-between bg-white p-2 rounded border border-rose-200 shadow-xs">
+                                <span class="font-bold text-polyu-800">6. Neck Disability Index (NDI) > 10 / 52 criterion:</span>
+                                <div>${c6}</div>
+                            </div>
+                            <div class="flex justify-between bg-white p-2 rounded border border-rose-200 shadow-xs">
+                                <span class="font-bold text-polyu-800">7. Pain Catastrophizing Scale (PCS) < 30 / 52 criterion:</span>
+                                <div>${c7}</div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            } else {
+                const g = evalRes.groupEval;
+                const c1 = g.noOtherPain ? '<span class="text-emerald-700 font-bold">PASS (No other body pain)</span>' : '<span class="text-rose-700 font-bold">FAIL (Has other body pain in past 6 months)</span>';
+
+                groupCriteriaHtml = `
+                    <div class="bg-sky-50/60 p-4 rounded-xl border border-sky-200">
+                        <div class="flex justify-between items-center border-b border-sky-200 pb-1 mb-3">
+                            <h4 class="font-bold text-sky-900 text-xs uppercase tracking-wider">3. Healthy Control Group Screening Results</h4>
+                            <span class="${g.eligible ? 'text-emerald-700 font-bold' : 'text-rose-700 font-bold'}">
+                                Result: ${g.eligible ? 'PASS (Eligible Control)' : 'FAIL (Ineligible Control)'}
+                            </span>
+                        </div>
+                        <div class="space-y-2 text-xs">
+                            <div class="flex justify-between bg-white p-2 rounded border border-sky-100">
+                                <span class="font-medium text-slate-700">1. No pain in any other body part for the past 6 months:</span>
+                                <div>${c1}</div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            // Section 4: NDI Detailed Answers (for Neck Pain Group)
+            let ndiDetailsHtml = '';
+            if (isPain) {
+                const ndiObj = item.ndi || {};
+                const ndiTotal = calculateNDIScore(ndiObj);
+                const ndiData = NDI_DATA[lang] || NDI_DATA['zh'];
+
+                let ndiRows = '';
+                for (let i = 0; i < 10; i++) {
+                    const sec = ndiData[i];
+                    const selectedIdx = ndiObj[`Sec_${i + 1}`];
+                    const optText = (sec && selectedIdx !== undefined) ? sec.options[selectedIdx] : 'N/A';
+                    const score = selectedIdx !== undefined ? selectedIdx : 0;
+
+                    ndiRows += `
+                        <div class="p-2.5 bg-white rounded border border-slate-200 space-y-1">
+                            <div class="flex justify-between items-center font-bold text-slate-800">
+                                <span>${sec ? sec.title : `Section ${i+1}`}</span>
+                                <span class="bg-slate-100 text-slate-700 px-2 py-0.5 rounded text-[11px] font-mono">Score: ${score} / 5</span>
+                            </div>
+                            <div class="text-slate-600 text-[11px] leading-relaxed italic pl-2 border-l-2 border-polyu-800">
+                                Selected: "${optText}"
+                            </div>
+                        </div>
+                    `;
+                }
+
+                ndiDetailsHtml = `
+                    <div class="bg-slate-50 p-4 rounded-xl border border-slate-200">
+                        <div class="flex justify-between items-center border-b pb-2 mb-3">
+                            <h4 class="font-bold text-slate-900 text-xs uppercase tracking-wider text-polyu-800">4. Neck Disability Index (NDI) Responses</h4>
+                            <span class="bg-polyu-800 text-white font-bold text-xs px-3 py-1 rounded-full">
+                                Total NDI Score: ${ndiTotal} / 50 (Criteria: >10/52)
+                            </span>
+                        </div>
+                        <div class="space-y-2">
+                            ${ndiRows}
+                        </div>
+                    </div>
+                `;
+            }
+
+            // Section 5: PCS Detailed Answers (for Neck Pain Group)
+            let pcsDetailsHtml = '';
+            if (isPain) {
+                const pcsObj = item.pcs || {};
+                const pcsTotal = calculatePCSScore(pcsObj);
+                const pcsItems = PCS_ITEMS[lang] || PCS_ITEMS['zh'];
+                const pcsScales = PCS_SCALE_OPTIONS[lang] || PCS_SCALE_OPTIONS['zh'];
+
+                let pcsRows = '';
+                for (let i = 0; i < 13; i++) {
+                    const itemPrompt = pcsItems[i] || `Item ${i + 1}`;
+                    const scoreVal = pcsObj[`Item_${i + 1}`] !== undefined ? pcsObj[`Item_${i + 1}`] : 0;
+                    const scaleObj = pcsScales.find(s => s.val === scoreVal);
+                    const scaleLabel = scaleObj ? scaleObj.label : `${scoreVal}`;
+
+                    pcsRows += `
+                        <div class="p-2 bg-white rounded border border-slate-200 flex justify-between items-center">
+                            <span class="font-medium text-slate-800 text-[11px] flex-1 pr-2">${itemPrompt}</span>
+                            <span class="font-bold text-polyu-800 bg-polyu-50 px-2.5 py-1 rounded border border-polyu-100 text-[11px] shrink-0">
+                                Score: ${scaleLabel}
+                            </span>
+                        </div>
+                    `;
+                }
+
+                pcsDetailsHtml = `
+                    <div class="bg-slate-50 p-4 rounded-xl border border-slate-200">
+                        <div class="flex justify-between items-center border-b pb-2 mb-3">
+                            <h4 class="font-bold text-slate-900 text-xs uppercase tracking-wider text-polyu-800">5. Pain Catastrophizing Scale (PCS) Responses</h4>
+                            <span class="bg-polyu-800 text-white font-bold text-xs px-3 py-1 rounded-full">
+                                Total PCS Score: ${pcsTotal} / 52 (Criteria: <30/52)
+                            </span>
+                        </div>
+                        <div class="space-y-1.5">
+                            ${pcsRows}
+                        </div>
+                    </div>
+                `;
+            }
+
+            // Combine all sections into Detail Modal Content
+            container.innerHTML = `
+                ${overallBadge}
+                ${demographicsHtml}
+                ${genScreeningHtml}
+                ${groupCriteriaHtml}
+                ${ndiDetailsHtml}
+                ${pcsDetailsHtml}
+            `;
+
+            document.getElementById('detailModal').classList.remove('hidden');
+        }
+
+        function closeDetailModal() {
+            document.getElementById('detailModal').classList.add('hidden');
+        }
+
+        function deleteSubmission(index) {
+            if (!confirm('Are you sure you want to delete this response submission?')) return;
+            const data = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+            data.splice(index, 1);
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+            renderOperatorTable();
+        }
+
+        function loadDemoData() {
+            const demoSubmissions = [
+                {
+                    id: '001',
+                    timestamp: new Date().toLocaleString('zh-HK'),
+                    lang: 'zh',
+                    demographics: { name: 'Wong Tai Man', age: 28, email: 'taiman.wong@example.com', education: '學士或以上' },
+                    eligibility: {
+                        Q1: 'Yes', Q2: 'Yes', Q3: 'Yes', Q4: 'Yes',
+                        Q5: 'No', Q6: 'No', Q7: 'No', Q8: 'No', Q9: 'No', Q10: 'No', Q11: 'No', Q12: 'No'
+                    },
+                    neckPainStatus: {
+                        hasPain: true,
+                        diagnosedCause: '沒有',
+                        duration: '三個月以上',
+                        screenExacerbated: '是',
+                        intensity: 6,
+                        coexistingConditions: '否',
+                        otherPain6Months: 'N/A'
+                    },
+                    ndi: { Sec_1: 2, Sec_2: 2, Sec_3: 1, Sec_4: 2, Sec_5: 2, Sec_6: 2, Sec_7: 2, Sec_8: 1, Sec_9: 2, Sec_10: 2 }, // Total = 18 (>10/52 -> PASS)
+                    pcs: { Item_1: 1, Item_2: 1, Item_3: 2, Item_4: 1, Item_5: 1, Item_6: 2, Item_7: 1, Item_8: 1, Item_9: 2, Item_10: 1, Item_11: 1, Item_12: 1, Item_13: 1 } // Total = 16 (<30/52 -> PASS)
+                },
+                {
+                    id: '002',
+                    timestamp: new Date().toLocaleString('zh-HK'),
+                    lang: 'zh',
+                    demographics: { name: 'Chan Mei Ling', age: 32, email: 'meiling.chan@example.com', education: '學士或以上' },
+                    eligibility: {
+                        Q1: 'Yes', Q2: 'Yes', Q3: 'Yes', Q4: 'Yes',
+                        Q5: 'No', Q6: 'No', Q7: 'No', Q8: 'No', Q9: 'No', Q10: 'No', Q11: 'No', Q12: 'No'
+                    },
+                    neckPainStatus: {
+                        hasPain: true,
+                        diagnosedCause: '沒有',
+                        duration: '三個月以上',
+                        screenExacerbated: '是',
+                        intensity: 5,
+                        coexistingConditions: '否',
+                        otherPain6Months: 'N/A'
+                    },
+                    ndi: { Sec_1: 1, Sec_2: 0, Sec_3: 1, Sec_4: 1, Sec_5: 0, Sec_6: 1, Sec_7: 1, Sec_8: 1, Sec_9: 0, Sec_10: 1 }, // Total = 7 (<=10/52 -> FAIL)
+                    pcs: { Item_1: 1, Item_2: 1, Item_3: 1, Item_4: 1, Item_5: 1, Item_6: 1, Item_7: 1, Item_8: 1, Item_9: 1, Item_10: 1, Item_11: 1, Item_12: 1, Item_13: 1 } // Total = 13 (<30/52)
+                },
+                {
+                    id: '003',
+                    timestamp: new Date().toLocaleString('zh-HK'),
+                    lang: 'en',
+                    demographics: { name: 'Lee Ka Ho', age: 24, email: 'kaho.lee@example.com', education: 'Degree or above' },
+                    eligibility: {
+                        Q1: 'Yes', Q2: 'Yes', Q3: 'Yes', Q4: 'Yes',
+                        Q5: 'No', Q6: 'No', Q7: 'No', Q8: 'No', Q9: 'No', Q10: 'No', Q11: 'No', Q12: 'No'
+                    },
+                    neckPainStatus: {
+                        hasPain: false,
+                        diagnosedCause: 'N/A',
+                        duration: 'N/A',
+                        screenExacerbated: 'N/A',
+                        intensity: 0,
+                        coexistingConditions: 'N/A',
+                        otherPain6Months: 'No'
+                    },
+                    ndi: {},
+                    pcs: {}
+                }
+            ];
+
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(demoSubmissions));
+            renderOperatorTable();
+        }
+
+        function clearAllResponses() {
+            if (!confirm('Are you sure you want to clear all stored research responses? This action cannot be undone.')) return;
+            localStorage.removeItem(STORAGE_KEY);
+            renderOperatorTable();
+        }
+
+        function exportToExcel() {
+            const data = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+            if (data.length === 0) {
+                alert('No response data available to export.');
+                return;
+            }
+
+            const exportRows = data.map(item => {
+                const evalRes = evaluateParticipant(item);
+                const ndiTotal = calculateNDIScore(item.ndi);
+                const pcsTotal = calculatePCSScore(item.pcs);
+
+                const row = {
+                    'Respondent ID': item.id,
+                    'Submission Timestamp': item.timestamp,
+                    'Name': item.demographics.name,
+                    'Age': item.demographics.age,
+                    'Email': item.demographics.email,
+                    'Education': item.demographics.education,
+                    'Group': item.neckPainStatus?.hasPain ? 'Neck Pain Group' : 'Healthy Control Group',
+                    'General Screening Eligible': evalRes.genEval.eligible ? 'YES' : 'NO',
+                    'Group Criteria Eligible': evalRes.groupEval.eligible ? 'YES' : 'NO',
+                    'Overall Eligibility': evalRes.overallEligible ? 'ELIGIBLE' : 'INELIGIBLE',
+                    'Neck Pain in Past 6 Months': item.neckPainStatus?.hasPain ? 'Yes' : 'No',
+                    'Pain Intensity (0-10)': item.neckPainStatus?.intensity || 0,
+                    'NDI Total Score (Max 50)': item.neckPainStatus?.hasPain ? ndiTotal : 'N/A',
+                    'NDI Criterion (>10/52)': item.neckPainStatus?.hasPain ? (ndiTotal > 10 ? 'PASS' : 'FAIL') : 'N/A',
+                    'PCS Total Score (Max 52)': item.neckPainStatus?.hasPain ? pcsTotal : 'N/A',
+                    'PCS Criterion (<30/52)': item.neckPainStatus?.hasPain ? (pcsTotal < 30 ? 'PASS' : 'FAIL') : 'N/A'
+                };
+
+                // Add General Screening Q1-12
+                for (let i = 1; i <= 12; i++) {
+                    row[`Gen_Screening_Q${i}`] = item.eligibility[`Q${i}`] || 'N/A';
+                }
+
+                // Add NDI Sec 1-10
+                if (item.neckPainStatus?.hasPain) {
+                    for (let i = 1; i <= 10; i++) {
+                        row[`NDI_Sec_${i}`] = item.ndi[`Sec_${i}`] !== undefined ? item.ndi[`Sec_${i}`] : 'N/A';
+                    }
+                    for (let i = 1; i <= 13; i++) {
+                        row[`PCS_Item_${i}`] = item.pcs[`Item_${i}`] !== undefined ? item.pcs[`Item_${i}`] : 'N/A';
+                    }
+                }
+
+                return row;
+            });
+
+            const worksheet = XLSX.utils.json_to_sheet(exportRows);
+            const workbook = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(workbook, worksheet, "fNIRS Research Submissions");
+            XLSX.writeFile(workbook, `fNIRS_Research_Submissions_${new Date().toISOString().slice(0,10)}.xlsx`);
+        }
+
+        function exportToCSV() {
+            exportToExcel();
+        }
+
+        function exportSingleReportPDF() {
+            window.print();
+        }
+
+        window.onload = function() {
+            renderSection1Options();
+            renderSection2Questions();
+            renderSection3Questions();
+            renderSection4NDI();
+            renderSection5PCS();
+        };
+    </script>
+</body>
+</html>
