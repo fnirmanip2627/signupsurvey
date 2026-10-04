@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>fNIR Research Screening Questionnaire</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Supabase JS Library -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body class="bg-slate-50 min-h-screen text-slate-800 font-sans antialiased">
+
+    <!-- Header Navigation -->
+    <header class="bg-slate-900 text-white shadow-md">
+        <div class="max-w-4xl mx-auto px-6 py-4 flex justify-between items-center">
+            <div>
+                <h1 class="text-xl font-bold tracking-tight">fNIR Research Study</h1>
+                <p class="text-xs text-slate-400">Participant Screening & Assessment Form</p>
+            </div>
+            <div class="flex items-center space-x-3">
+                <button onclick="toggleLanguage()" class="text-xs bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 px-3 py-1.5 rounded-md transition">
+                    <span id="lang_btn_text">Language: 中文</span>
+                </button>
+                <button onclick="toggleOperatorModal()" class="text-xs bg-indigo-600 hover:bg-indigo-500 text-white font-medium px-3 py-1.5 rounded-md transition">
+                    Operator Mode
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Form Container -->
+    <main class="max-w-3xl mx-auto my-8 px-4">
+        
+        <!-- Validation Banner -->
+        <div id="validation_banner" class="hidden mb-6 p-4 bg-amber-50 border-l-4 border-amber-500 text-amber-800 rounded shadow-sm text-sm">
+            <span id="validation_banner_text"></span>
+        </div>
+
+        <!-- Section 1: Demographics -->
+        <section id="section_1" class="bg-white p-6 sm:p-8 rounded-xl shadow-sm border border-slate-200 mb-6">
+            <h2 class="text-lg font-bold text-slate-900 border-b border-slate-100 pb-3 mb-6" id="sec1_title">1. Demographics & Information</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-2" id="lbl_name">Participant Name / ID</label>
+                    <input type="text" id="input_name" class="w-full px-4 py-2.5 rounded-lg border border-slate-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition text-sm">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-2" id="lbl_age">Age</label>
+                    <input type="number" id="input_age" class="w-full px-4 py-2.5 rounded-lg border border-slate-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition text-sm">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-2" id="lbl_email">Email Address</label>
+                    <input type="email" id="input_email" class="w-full px-4 py-2.5 rounded-lg border border-slate-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition text-sm">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-2" id="lbl_education">Education Level</label>
+                    <select id="select_education" class="w-full px-4 py-2.5 rounded-lg border border-slate-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition text-sm bg-white">
+                        <option value="Secondary">Secondary School</option>
+                        <option value="Bachelor">Bachelor Degree</option>
+                        <option value="Master">Master Degree</option>
+                        <option value="Doctorate">Doctorate / PhD</option>
+                    </select>
+                </div>
+            </div>
+            <div class="mt-8 flex justify-end">
+                <button onclick="nextSection(1, 2)" class="bg-slate-900 hover:bg-slate-800 text-white font-medium text-sm px-6 py-2.5 rounded-lg transition">Next Step &rarr;</button>
+            </div>
+        </section>
+
+        <!-- Section 2: Neck Pain Screening -->
+        <section id="section_2" class="hidden bg-white p-6 sm:p-8 rounded-xl shadow-sm border border-slate-200 mb-6">
+            <h2 class="text-lg font-bold text-slate-900 border-b border-slate-100 pb-3 mb-6" id="sec2_title">2. Neck Pain Status</h2>
+            <p class="text-sm text-slate-600 mb-6" id="sec2_desc">Have you experienced neck pain in the past 4 weeks or during daily computer work?</p>
+            <div class="space-y-3">
+                <label class="flex items-center p-4 border border-slate-200 rounded-lg cursor-pointer hover:bg-slate-50 transition">
+                    <input type="radio" name="neck_pain" value="yes" onclick="setNeckPain(true)" class="h-4 w-4 text-indigo-600 focus:ring-indigo-500">
+                    <span class="ml-3 text-sm font-medium text-slate-800" id="opt_pain_yes">Yes, I currently have neck pain / stiffness.</span>
+                </label>
+                <label class="flex items-center p-4 border border-slate-200 rounded-lg cursor-pointer hover:bg-slate-50 transition">
+                    <input type="radio" name="neck_pain" value="no" onclick="setNeckPain(false)" class="h-4 w-4 text-indigo-600 focus:ring-indigo-500">
+                    <span class="ml-3 text-sm font-medium text-slate-800" id="opt_pain_no">No, I do not have neck pain.</span>
+                </label>
+            </div>
+            <div class="mt-8 flex justify-between">
+                <button onclick="goToSection(1)" class="text-slate-600 hover:text-slate-800 font-medium text-sm px-4 py-2.5">&larr; Back</button>
+                <button onclick="processNeckPainSection()" class="bg-slate-900 hover:bg-slate-800 text-white font-medium text-sm px-6 py-2.5 rounded-lg transition">Next Step &rarr;</button>
+            </div>
+        </section>
+
+        <!-- Section 3: PCS (Pain Catastrophizing Scale) -->
+        <section id="section_3" class="hidden bg-white p-6 sm:p-8 rounded-xl shadow-sm border border-slate-200 mb-6">
+            <h2 class="text-lg font-bold text-slate-900 border-b border-slate-100 pb-3 mb-2" id="sec3_title">3. Pain Catastrophizing Scale (PCS)</h2>
+            <p class="text-xs text-slate-500 mb-6" id="sec3_desc">Rate how much you experience these thoughts when in pain (0 = Not at all, 4 = All the time):</p>
+            
+            <div id="pcs_items_container" class="space-y-6">
+                <!-- Dynamically Generated 13 PCS Items -->
+            </div>
+
+            <div class="mt-8 flex justify-between">
+                <button onclick="goToSection(2)" class="text-slate-600 hover:text-slate-800 font-medium text-sm px-4 py-2.5">&larr; Back</button>
+                <button onclick="submitQuestionnaire()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-medium text-sm px-6 py-2.5 rounded-lg transition">Submit Questionnaire</button>
+            </div>
+        </section>
+
+        <!-- Section 6: Completion Screen -->
+        <section id="section_6" class="hidden bg-white p-12 rounded-xl shadow-sm border border-slate-200 text-center">
+            <div class="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+            </div>
+            <h2 class="text-2xl font-bold text-slate-900 mb-2" id="s6_title">Submission Complete</h2>
+            <p class="text-slate-600 text-sm max-w-md mx-auto mb-8" id="s6_msg">Thank you for participating. Your response has been securely logged into the research database.</p>
+            <button onclick="resetForm()" class="bg-slate-900 hover:bg-slate-800 text-white text-sm font-medium px-6 py-2.5 rounded-lg transition">Submit Another Response</button>
+        </section>
+
+    </main>
+
+    <!-- Operator Dashboard Modal -->
+    <div id="operator_modal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-xl shadow-xl w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden">
+            <div class="p-4 sm:p-6 bg-slate-900 text-white flex justify-between items-center">
+                <div>
+                    <h3 class="font-bold text-lg">Operator Mode Dashboard</h3>
+                    <p class="text-xs text-slate-400">Centralized Cloud Database Viewer (Supabase)</p>
+                </div>
+                <button onclick="toggleOperatorModal()" class="text-slate-400 hover:text-white text-xl font-bold">&times;</button>
+            </div>
+
+            <!-- Login Section -->
+            <div id="op_login_panel" class="p-6 bg-slate-50 border-b border-slate-200 flex flex-wrap gap-3 items-center">
+                <input type="email" id="op_email" placeholder="Operator Email" class="text-sm px-3 py-2 border rounded-md outline-none focus:ring-2 focus:ring-indigo-500">
+                <input type="password" id="op_password" placeholder="Password" class="text-sm px-3 py-2 border rounded-md outline-none focus:ring-2 focus:ring-indigo-500">
+                <button onclick="handleOperatorLogin()" class="text-sm bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2 rounded-md font-medium transition">Cloud Sync Login</button>
+                <span id="op_status" class="text-xs text-slate-500 font-mono">Status: Local Mode</span>
+            </div>
+
+            <!-- Response Table -->
+            <div class="p-6 overflow-y-auto flex-1">
+                <div class="flex justify-between items-center mb-4">
+                    <h4 class="text-sm font-semibold text-slate-700">All Participant Records</h4>
+                    <button onclick="loadOperatorDashboardData()" class="text-xs text-indigo-600 hover:text-indigo-800 font-medium">Refresh Data</button>
+                </div>
+                <div class="overflow-x-auto border border-slate-200 rounded-lg">
+                    <table class="w-full text-left border-collapse text-xs">
+                        <thead class="bg-slate-100 text-slate-700 uppercase font-semibold">
+                            <tr>
+                                <th class="p-3 border-b">ID</th>
+                                <th class="p-3 border-b">Timestamp</th>
+                                <th class="p-3 border-b">Name</th>
+                                <th class="p-3 border-b">Age</th>
+                                <th class="p-3 border-b">Neck Pain</th>
+                                <th class="p-3 border-b">Details</th>
+                            </tr>
+                        </thead>
+                        <tbody id="operator_table_body" class="divide-y divide-slate-200 text-slate-600">
+                            <tr>
+                                <td colspan="6" class="p-4 text-center text-slate-400">No records loaded yet.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <div class="p-4 bg-slate-50 border-t border-slate-200 flex justify-end">
+                <button onclick="exportJSON()" class="text-xs bg-slate-800 hover:bg-slate-700 text-white px-4 py-2 rounded-md transition">Export JSON</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MAIN JAVASCRIPT LOGIC -->
+    <script>
+        // =========================================================================
+        // 🔑 ADD YOUR SUPABASE CREDENTIALS HERE
+        // =========================================================================
+        const SUPABASE_URL = 'YOUR_SUPABASE_URL_HERE';           // e.g., 'https://xyzcompany.supabase.co'
+        const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY_HERE'; // e.g., 'eyJhbGciOiJKV1QiLC...'
+        // =========================================================================
+
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        const STORAGE_KEY = 'fnir_research_responses_v4';
+
+        let selectedLang = 'en';
+        let hasNeckPain = false;
+        let formData = { demographics: {}, neckPainStatus: {}, pcs: {} };
+
+        const pcsPrompts = [
+            "I worry all the time about whether the pain will end.",
+            "I feel I can't go on.",
+            "It's terrible and I think it's never going to get any better.",
+            "It's awful and I feel that it overwhelms me.",
+            "I feel I can't stand it anymore.",
+            "I become afraid that the pain will get worse.",
+            "I keep thinking of other painful events.",
+            "I anxiously want the pain to go away.",
+            "I can't seem to keep it out of my mind.",
+            "I keep thinking about how much it hurts.",
+            "I keep thinking about how badly I want the pain to stop.",
+            "There's nothing I can do to reduce the intensity of the pain.",
+            "I wonder whether something serious may happen."
+        ];
+
+        // Translation dictionary
+        const I18N_TEXT = {
+            en: {
+                sec1_title: "1. Demographics & Information",
+                sec2_title: "2. Neck Pain Status",
+                sec3_title: "3. Pain Catastrophizing Scale (PCS)",
+                sec6_msg: "Thank you for participating. Your response has been securely logged into the research database.",
+                btn_lang: "Language: 中文"
+            },
+            zh: {
+                sec1_title: "1. 基本個人資料",
+                sec2_title: "2. 頸部疼痛狀況",
+                sec3_title: "3. 疼痛災難化量表 (PCS)",
+                sec6_msg: "感謝您的參與。您的問卷數據已成功儲存至研究中央資料庫。",
+                btn_lang: "Language: English"
+            }
+        };
+
+        // Initialize App
+        document.addEventListener("DOMContentLoaded", () => {
+            renderPCSItems();
+        });
+
+        function renderPCSItems() {
+            const container = document.getElementById('pcs_items_container');
+            container.innerHTML = pcsPrompts.map((prompt, idx) => `
+                <div class="p-4 bg-slate-50 border border-slate-200 rounded-lg">
+                    <p class="text-sm font-medium text-slate-800 mb-3">${idx + 1}. ${prompt}</p>
+                    <div class="grid grid-cols-5 gap-2 text-center text-xs">
+                        ${[0, 1, 2, 3, 4].map(val => `
+                            <label class="cursor-pointer">
+                                <input type="radio" name="pcs_item_${idx}" value="${val}" class="peer hidden">
+                                <div class="p-2 border border-slate-300 rounded peer-checked:bg-indigo-600 peer-checked:text-white peer-checked:border-indigo-600 transition">
+                                    ${val}
+                                </div>
+                            </label>
+                        `).join('')}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function toggleLanguage() {
+            selectedLang = selectedLang === 'en' ? 'zh' : 'en';
+            document.getElementById('lang_btn_text').textContent = I18N_TEXT[selectedLang].btn_lang;
+            document.getElementById('sec1_title').textContent = I18N_TEXT[selectedLang].sec1_title;
+            document.getElementById('sec2_title').textContent = I18N_TEXT[selectedLang].sec2_title;
+            document.getElementById('sec3_title').textContent = I18N_TEXT[selectedLang].sec3_title;
+            document.getElementById('s6_msg').textContent = I18N_TEXT[selectedLang].sec6_msg;
+        }
+
+        function setNeckPain(status) {
+            hasNeckPain = status;
+        }
+
+        function goToSection(secNumber) {
+            hideValidationBanner();
+            [1, 2, 3, 6].forEach(s => {
+                document.getElementById(`section_${s}`)?.classList.add('hidden');
+            });
+            document.getElementById(`section_${secNumber}`)?.classList.remove('hidden');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function nextSection(current, next) {
+            if (current === 1) {
+                const name = document.getElementById('input_name').value.trim();
+                const age = document.getElementById('input_age').value.trim();
+                if (!name || !age) {
+                    showValidationBanner("Please fill in your Name and Age before proceeding.");
+                    return;
+                }
+                formData.demographics = {
+                    name,
+                    age,
+                    email: document.getElementById('input_email').value.trim(),
+                    education: document.getElementById('select_education').value
+                };
+            }
+            goToSection(next);
+        }
+
+        function processNeckPainSection() {
+            const selected = document.querySelector('input[name="neck_pain"]:checked');
+            if (!selected) {
+                showValidationBanner("Please select whether you experience neck pain.");
+                return;
+            }
+            formData.neckPainStatus = { hasPain: hasNeckPain };
+
+            if (hasNeckPain) {
+                goToSection(3); // Go to PCS Questionnaire
+            } else {
+                formData.pcs = {};
+                submitQuestionnaire(); // Directly submit if no pain
+            }
+        }
+
+        function getNextRespondentId() {
+            return 'P_' + Math.random().toString(36).substr(2, 6).toUpperCase();
+        }
+
+        function showValidationBanner(msg) {
+            const b = document.getElementById('validation_banner');
+            document.getElementById('validation_banner_text').textContent = msg;
+            b.classList.remove('hidden');
+        }
+
+        function hideValidationBanner() {
+            document.getElementById('validation_banner').classList.add('hidden');
+        }
+
+        // =========================================================================
+        // CENTRALIZED SUBMISSION FUNCTION (SUPABASE + LOCALSTORAGE FALLBACK)
+        // =========================================================================
+        async function submitQuestionnaire() {
+            if (hasNeckPain) {
+                const pcsResponses = {};
+                for (let i = 0; i < 13; i++) {
+                    const sel = document.querySelector(`input[name="pcs_item_${i}"]:checked`);
+                    if (!sel) {
+                        showValidationBanner(selectedLang === 'zh' ? `請回答 PCS 第 ${i + 1} 題。` : `Please answer PCS item ${i + 1}.`);
+                        return;
+                    }
+                    pcsResponses[`Item_${i + 1}`] = parseInt(sel.value);
+                }
+                formData.pcs = pcsResponses;
+            }
+
+            formData.id = getNextRespondentId();
+            formData.timestamp = new Date().toLocaleString('zh-HK');
+
+            // 1. Always save to LocalStorage fallback
+            const existing = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+            existing.push(formData);
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(existing));
+
+            // 2. Submit directly to Supabase cloud table
+            try {
+                const { error } = await supabaseClient
+                    .from('responses')
+                    .insert([{
+                        id: formData.id,
+                        participant_name: formData.demographics.name,
+                        has_neck_pain: formData.neckPainStatus.hasPain,
+                        full_data: formData
+                    }]);
+
+                if (error) console.error('Supabase submission error:', error);
+            } catch (err) {
+                console.error('Network submission error:', err);
+            }
+
+            goToSection(6);
+        }
+
+        // =========================================================================
+        // OPERATOR DASHBOARD & SYNC LOGIC
+        // =========================================================================
+        function toggleOperatorModal() {
+            const modal = document.getElementById('operator_modal');
+            modal.classList.toggle('hidden');
+            if (!modal.classList.contains('hidden')) {
+                loadOperatorDashboardData();
+            }
+        }
+
+        async function handleOperatorLogin() {
+            const email = document.getElementById('op_email').value;
+            const password = document.getElementById('op_password').value;
+
+            const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
+
+            if (error) {
+                alert('Login failed: ' + error.message);
+            } else {
+                document.getElementById('op_status').textContent = 'Status: Cloud Authenticated';
+                document.getElementById('op_status').classList.add('text-emerald-600');
+                loadOperatorDashboardData();
+            }
+        }
+
+        async function loadOperatorDashboardData() {
+            let allRecords = [];
+
+            // Attempt cloud fetch from Supabase
+            try {
+                const { data, error } = await supabaseClient
+                    .from('responses')
+                    .select('full_data');
+
+                if (!error && data && data.length > 0) {
+                    allRecords = data.map(row => row.full_data);
+                }
+            } catch (err) {
+                console.warn('Could not fetch cloud data, falling back to local storage.');
+            }
+
+            // Local fallback if no cloud data returned
+            if (allRecords.length === 0) {
+                allRecords = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+            }
+
+            renderOperatorTable(allRecords);
+        }
+
+        function renderOperatorTable(records) {
+            const tbody = document.getElementById('operator_table_body');
+            if (records.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="6" class="p-4 text-center text-slate-400">No submissions found.</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = records.map(r => `
+                <tr class="hover:bg-slate-50">
+                    <td class="p-3 font-mono font-semibold text-indigo-600">${r.id || 'N/A'}</td>
+                    <td class="p-3">${r.timestamp || ''}</td>
+                    <td class="p-3 font-medium">${r.demographics?.name || 'Anonymous'}</td>
+                    <td class="p-3">${r.demographics?.age || '-'}</td>
+                    <td class="p-3">${r.neckPainStatus?.hasPain ? '<span class="text-red-600 font-semibold">Yes</span>' : '<span class="text-slate-400">No</span>'}</td>
+                    <td class="p-3 font-mono text-[10px] text-slate-500">${JSON.stringify(r.pcs || {})}</td>
+                </tr>
+            `).join('');
+        }
+
+        function exportJSON() {
+            const data = localStorage.getItem(STORAGE_KEY) || '[]';
+            const blob = new Blob([data], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `fnir_responses_${new Date().toISOString().slice(0,10)}.json`;
+            a.click();
+        }
+
+        function resetForm() {
+            formData = { demographics: {}, neckPainStatus: {}, pcs: {} };
+            document.querySelectorAll('input[type="text"], input[type="number"], input[type="email"]').forEach(i => i.value = '');
+            document.querySelectorAll('input[type="radio"]').forEach(i => i.checked = false);
+            goToSection(1);
+        }
+    </script>
+</body>
+</html>
