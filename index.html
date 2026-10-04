@@ -1561,42 +1561,36 @@
         
         // 2. Load Central Data into Operator Dashboard
         async function loadOperatorDashboardData() {
-            let allRecords = [];
+            console.log("Syncing operator data from Supabase...");
         
-            // Check if operator is signed in
-            const { data: { session } } = await supabaseClient.auth.getSession();
-        
-            if (session) {
-                // Operator is authenticated: fetch all records centrally
+            try {
                 const { data, error } = await supabaseClient
                     .from('responses')
-                    .select('full_data');
+                    .select('full_data')
+                    .order('created_at', { ascending: false });
         
-                if (!error && data) {
-                    allRecords = data.map(row => row.full_data);
+                if (error) {
+                    console.error("Supabase fetch error:", error.message);
+                } else if (data && data.length > 0) {
+                    // Extract full_data objects into an array
+                    const cloudRecords = data.map(row => row.full_data);
+                    
+                    // Sync cloud records into localStorage so existing UI functions see them
+                    localStorage.setItem(STORAGE_KEY, JSON.stringify(cloudRecords));
+                    console.log(`Successfully synced ${cloudRecords.length} records from Supabase!`);
                 }
+            } catch (err) {
+                console.warn("Could not reach Supabase, falling back to local storage:", err);
             }
         
-            // Fallback to local storage if offline or not logged in
-            if (allRecords.length === 0) {
-                allRecords = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
-            }
-        
-            renderOperatorTable(allRecords);
-        }
-        
-        // 3. Operator Authentication Function
-        async function loginOperator(email, password) {
-            const { data, error } = await supabaseClient.auth.signInWithPassword({
-                email: email,
-                password: password,
-            });
-        
-            if (error) {
-                alert('Operator login failed: ' + error.message);
-            } else {
-                alert('Operator mode synced with cloud database!');
-                loadOperatorDashboardData();
+            // Call whatever function your script uses to refresh/draw the operator UI table
+            // (Check your script for the exact name, common examples below)
+            if (typeof renderOperatorTable === 'function') {
+                renderOperatorTable();
+            } else if (typeof updateOperatorUI === 'function') {
+                updateOperatorUI();
+            } else if (typeof loadOperatorPanel === 'function') {
+                loadOperatorPanel();
             }
         }
 
