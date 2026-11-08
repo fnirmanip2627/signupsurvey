@@ -255,6 +255,18 @@
                     </p>
                 </div>
 
+                <div class="bg-amber-50/70 border-2 border-amber-200 rounded-xl p-6 mb-6 space-y-3">
+                    <label class="flex items-start space-x-3 cursor-pointer">
+                        <input type="checkbox" id="consentAgreementCheckbox" class="mt-1 w-5 h-5 text-polyu-800 border-slate-300 rounded focus:ring-polyu-800 accent-polyu-800 shrink-0">
+                        <span class="text-xs sm:text-sm text-slate-800 leading-relaxed font-medium">
+                            本人知悉此研究所得的資料可能被用作日後的研究及發表，但本人的私隱權利將得以保留，即本人的個人資料不會被公開。本人同意向研究人員提供個人資料，並授權研究團隊僅將該等資料用於本研究之目的。<br>
+                            <span class="italic text-slate-600 block mt-1">
+                                I understand that information obtained from this research may be used in future research and published. However, my right to privacy will be retained, i.e. my personal details will not be revealed. I agree to provide my personal information to the researchers and authorise the research team to use this information solely for the purposes of this study.
+                            </span>
+                        </span>
+                    </label>
+                </div>
+                
                 <!-- Language Selection Prompt -->
                 <div class="bg-white border-2 border-dashed border-slate-300 rounded-xl p-6 text-center">
                     <label class="block font-bold text-slate-900 text-base mb-4">
@@ -1117,6 +1129,14 @@
         }
 
         function startQuestionnaire() {
+            hideValidationBanner();
+            // 檢查參與者是否已同意條款
+            const consentCheckbox = document.getElementById('consentAgreementCheckbox');
+            if (!consentCheckbox || !consentCheckbox.checked) {
+                showValidationBanner(selectedLang === 'zh' ? '請先閱讀並勾選同意提供個人資料與私隱條款，方可開始填寫問卷。' : 'Please read and check the agreement to provide personal information before starting the questionnaire.');
+                return;
+            }
+            
             document.getElementById('stepperContainer').classList.remove('hidden');
             goToSection(1);
         }
@@ -1510,6 +1530,9 @@
             document.getElementById('s1_name_input').value = '';
             document.getElementById('s1_age_input').value = '';
             document.getElementById('s1_email_input').value = '';
+
+            const consentCheckbox = document.getElementById('consentAgreementCheckbox');
+            if (consentCheckbox) consentCheckbox.checked = false;       
             
             goToSection(0);
         }
