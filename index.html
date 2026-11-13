@@ -575,7 +575,6 @@
                             <th class="p-3">Group Criteria</th>
                             <th class="p-3">Overall Status</th>
                             <th class="p-3 text-right">Actions</th>
-                            <th class="p-3">Remarks</th>
                         </tr>
                     </thead>
                     <tbody id="responsesTableBody" class="divide-y divide-slate-200 bg-white">
@@ -1675,14 +1674,6 @@
                         <td class="p-3">${genBadge}</td>
                         <td class="p-3">${groupBadge}</td>
                         <td class="p-3">${overallBadge}</td>
-                        <td class="p-3">
-                            <input type="text" 
-                                value="${remarksValue}" 
-                                placeholder="Type remark..." 
-                                onchange="updateParticipantRemark('${item._dbId}', this.value)"
-                                class="w-32 px-2 py-1 text-xs border border-slate-300 rounded focus:outline-none focus:ring-1 focus:ring-polyu-800"
-                                title="Press enter or click away to save remark">
-                        </td>
                         <td class="p-3 text-right space-x-1">
                             <button onclick="openDetailModal(${index})" class="bg-polyu-800 hover:bg-polyu-900 text-white px-2.5 py-1 rounded text-xs font-semibold shadow-xs transition">
                                 <i class="fa-solid fa-file-lines mr-1"></i>View Report
@@ -1998,45 +1989,6 @@
             await renderOperatorTable();
         }
         
-        async function updateParticipantRemark(dbId, newRemark) {
-            if (!isOperatorLoggedIn) {
-                alert('Please sign in as an authorized operator first.');
-                return;
-            }
-        
-            try {
-                const { data: existingRow, error: fetchError } = await supabaseClient
-                    .from('responses')
-                    .select('data')
-                    .eq('id', dbId)
-                    .single();
-        
-                if (fetchError) throw fetchError;
-        
-                const updatedData = {
-                    ...(existingRow.data || {}),
-                    remark: newRemark
-                };
-        
-                const { error: updateError } = await supabaseClient
-                    .from('responses')
-                    .update({ data: updatedData })
-                    .eq('id', dbId);
-        
-                if (updateError) throw updateError;
-        
-                const localItem = currentResponses.find(r => r._dbId === dbId);
-                if (localItem) {
-                    localItem.remark = newRemark;
-                }
-        
-                console.log('Remark saved successfully across platforms.');
-            } catch (err) {
-                console.error('Failed to save remark:', err);
-                alert('Failed to save remark. Please check your network connection.');
-            }
-        }
-        
         function loadDemoData() {
             alert('Sample data is disabled in the live research dashboard. Use a separate test project for testing.');
         }
@@ -2067,7 +2019,6 @@
                     'General Screening Eligible': evalRes.genEval.eligible ? 'YES' : 'NO',
                     'Group Criteria Eligible': evalRes.groupEval.eligible ? 'YES' : 'NO',
                     'Overall Eligibility': evalRes.overallEligible ? 'ELIGIBLE' : 'INELIGIBLE',
-                    'Remark': item.remark || '', 
                     'Neck Pain in Past 6 Months': item.neckPainStatus?.hasPain ? 'Yes' : 'No',
                     'Pain Intensity (0-10)': item.neckPainStatus?.intensity || 0,
                     'NDI Total Score (Max 50)': item.neckPainStatus?.hasPain ? ndiTotal : 'N/A',
