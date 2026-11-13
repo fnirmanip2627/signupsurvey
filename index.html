@@ -314,6 +314,45 @@
 
                     <div>
                         <label class="block text-sm font-bold text-slate-800 mb-1">
+                            <span data-i18n="s1_gender">Gender</span> <span class="text-rose-600">*</span>
+                        </label>
+                        <div class="flex space-x-4">
+                            <label class="flex items-center space-x-2 cursor-pointer bg-slate-50 px-4 py-2.5 border border-slate-300 rounded-lg hover:border-polyu-800 flex-1">
+                                <input type="radio" name="s1_gender" value="Male" class="accent-polyu-800">
+                                <span class="font-semibold text-slate-800" data-i18n="s1_gender_m">男 (Male)</span>
+                            </label>
+                            <label class="flex items-center space-x-2 cursor-pointer bg-slate-50 px-4 py-2.5 border border-slate-300 rounded-lg hover:border-polyu-800 flex-1">
+                                <input type="radio" name="s1_gender" value="Female" class="accent-polyu-800">
+                                <span class="font-semibold text-slate-800" data-i18n="s1_gender_f">女 (Female)</span>
+                            </label>
+                        </div>
+                    </div>
+                
+                    <div>
+                        <label class="block text-sm font-bold text-slate-800 mb-1">
+                            <span data-i18n="s1_phone">Phone Number</span> <span class="text-rose-600">*</span>
+                        </label>
+                        <input type="tel" id="s1_phone_input" class="w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-polyu-800" placeholder="e.g. 9123 4567">
+                    </div>
+                
+                    <div>
+                        <label class="block text-sm font-bold text-slate-800 mb-1">
+                            <span data-i18n="s1_email">Email Address</span> <span class="text-rose-600">*</span>
+                        </label>
+                        <input type="email" id="s1_email_input" class="w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-polyu-800" placeholder="name@example.com">
+                    </div>
+                
+                    <div>
+                        <label class="block text-sm font-bold text-slate-800 mb-2">
+                            <span data-i18n="s1_edu">Level of Education</span> <span class="text-rose-600">*</span>
+                        </label>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3" id="eduOptionsContainer">
+                            <!-- Populated dynamically -->
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-bold text-slate-800 mb-1">
                             <span data-i18n="s1_email">Email Address</span> <span class="text-rose-600">*</span>
                         </label>
                         <input type="email" id="s1_email_input" class="w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-polyu-800" placeholder="name@example.com">
@@ -552,6 +591,7 @@
                             <th class="p-3">Group Criteria</th>
                             <th class="p-3">Overall Status</th>
                             <th class="p-3 text-right">Actions</th>
+                            <th class="p-3">Remarks</th>
                         </tr>
                     </thead>
                     <tbody id="responsesTableBody" class="divide-y divide-slate-200 bg-white">
@@ -658,7 +698,7 @@
             id: '',
             timestamp: '',
             lang: 'zh',
-            demographics: { name: '', age: '', email: '', education: '' },
+            demographics: { name: '', age: '', email: '', gender: '', phone: '', education: '' },
             eligibility: {},
             neckPainStatus: {
                 hasPain: false,
@@ -683,6 +723,10 @@
                 s1_name: '姓名',
                 s1_age: '年齡',
                 s1_email: '電郵地址',
+                s1_gender: '性別',        
+                s1_phone: '聯絡電話',    
+                s1_gender_m: '男 (Male)',
+                s1_gender_f: '女 (Female)', 
                 s1_edu: '教育程度',
                 edu_none: '無',
                 edu_primary: '小學',
@@ -723,6 +767,10 @@
                 s1_name: 'Name',
                 s1_age: 'Age',
                 s1_email: 'Email Address',
+                s1_gender: 'Gender',     
+                s1_phone: 'Phone Number',
+                s1_gender_m: 'Male',    
+                s1_gender_f: 'Female', 
                 s1_edu: 'Level of Education',
                 edu_none: 'None',
                 edu_primary: 'Primary education',
@@ -1380,11 +1428,13 @@
             if (secNum === 1) {
                 const name = document.getElementById('s1_name_input').value.trim();
                 const age = document.getElementById('s1_age_input').value.trim();
+                const genderEl = document.querySelector('input[name="s1_gender"]:checked');
+                const phone = document.getElementById('s1_phone_input').value.trim();     
                 const email = document.getElementById('s1_email_input').value.trim();
                 const eduEl = document.querySelector('input[name="s1_education"]:checked');
 
-                if (!name || !age || !email || !eduEl) {
-                    showValidationBanner(selectedLang === 'zh' ? '請完整填寫姓名、年齡、電郵及教育程度。' : 'Please complete name, age, email, and level of education.');
+                if (!name || !age || !genderEl || !phone || !email || !eduEl) {
+                    showValidationBanner(selectedLang === 'zh' ? '請完整填寫姓名、年齡、性別、電話、電郵及教育程度。' : 'Please complete name, age, gender, phone, email, and level of education.');
                     return;
                 }
 
@@ -1400,7 +1450,7 @@
                     return;
                 }
 
-                formData.demographics = { name, age: ageNum, email, education: eduEl.value };
+                formData.demographics = { name, age: ageNum, gender: genderEl.value, phone: phone, email, education: eduEl.value };
                 goToSection(2);
 
             } else if (secNum === 2) {
@@ -1529,6 +1579,8 @@
             };
             document.getElementById('s1_name_input').value = '';
             document.getElementById('s1_age_input').value = '';
+            document.getElementById('s1_phone_input').value = '';
+            document.querySelectorAll('input[name="s1_gender"]').forEach(el => el.checked = false); 
             document.getElementById('s1_email_input').value = '';
 
             const consentCheckbox = document.getElementById('consentAgreementCheckbox');
@@ -1639,6 +1691,14 @@
                         <td class="p-3">${genBadge}</td>
                         <td class="p-3">${groupBadge}</td>
                         <td class="p-3">${overallBadge}</td>
+                        <td class="p-3">
+                            <input type="text" 
+                                value="${remarksValue}" 
+                                placeholder="Type remark..." 
+                                onchange="updateParticipantRemark('${item._dbId}', this.value)"
+                                class="w-32 px-2 py-1 text-xs border border-slate-300 rounded focus:outline-none focus:ring-1 focus:ring-polyu-800"
+                                title="Press enter or click away to save remark">
+                        </td>
                         <td class="p-3 text-right space-x-1">
                             <button onclick="openDetailModal(${index})" class="bg-polyu-800 hover:bg-polyu-900 text-white px-2.5 py-1 rounded text-xs font-semibold shadow-xs transition">
                                 <i class="fa-solid fa-file-lines mr-1"></i>View Report
@@ -1711,6 +1771,8 @@
                     <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
                         <div><span class="text-slate-500 block">Name:</span> <span class="font-bold text-slate-900">${item.demographics.name}</span></div>
                         <div><span class="text-slate-500 block">Age:</span> <span class="font-bold text-slate-900">${item.demographics.age} years old</span></div>
+                        <div><span class="text-slate-500 block">Gender:</span> <span class="font-bold text-slate-900">${item.demographics.gender || 'N/A'}</span></div>
+                        <div><span class="text-slate-500 block">Phone:</span> <span class="font-bold text-slate-900">${item.demographics.phone || 'N/A'}</span></div>
                         <div><span class="text-slate-500 block">Email:</span> <span class="font-bold text-slate-900">${item.demographics.email}</span></div>
                         <div><span class="text-slate-500 block">Education:</span> <span class="font-bold text-slate-900">${item.demographics.education}</span></div>
                     </div>
@@ -1951,7 +2013,46 @@
             if (error) { alert('Delete failed. Check operator authorization and database policies.'); console.error(error); return; }
             await renderOperatorTable();
         }
-
+        
+        async function updateParticipantRemark(dbId, newRemark) {
+            if (!isOperatorLoggedIn) {
+                alert('Please sign in as an authorized operator first.');
+                return;
+            }
+        
+            try {
+                const { data: existingRow, error: fetchError } = await supabaseClient
+                    .from('responses')
+                    .select('data')
+                    .eq('id', dbId)
+                    .single();
+        
+                if (fetchError) throw fetchError;
+        
+                const updatedData = {
+                    ...(existingRow.data || {}),
+                    remark: newRemark
+                };
+        
+                const { error: updateError } = await supabaseClient
+                    .from('responses')
+                    .update({ data: updatedData })
+                    .eq('id', dbId);
+        
+                if (updateError) throw updateError;
+        
+                const localItem = currentResponses.find(r => r._dbId === dbId);
+                if (localItem) {
+                    localItem.remark = newRemark;
+                }
+        
+                console.log('Remark saved successfully across platforms.');
+            } catch (err) {
+                console.error('Failed to save remark:', err);
+                alert('Failed to save remark. Please check your network connection.');
+            }
+        }
+        
         function loadDemoData() {
             alert('Sample data is disabled in the live research dashboard. Use a separate test project for testing.');
         }
@@ -1974,12 +2075,15 @@
                     'Submission Timestamp': item.timestamp,
                     'Name': item.demographics.name,
                     'Age': item.demographics.age,
+                    'Gender': item.demographics.gender || 'N/A',     // 
+                    'Phone Number': item.demographics.phone || 'N/A', // 
                     'Email': item.demographics.email,
                     'Education': item.demographics.education,
                     'Group': item.neckPainStatus?.hasPain ? 'Neck Pain Group' : 'Healthy Control Group',
                     'General Screening Eligible': evalRes.genEval.eligible ? 'YES' : 'NO',
                     'Group Criteria Eligible': evalRes.groupEval.eligible ? 'YES' : 'NO',
                     'Overall Eligibility': evalRes.overallEligible ? 'ELIGIBLE' : 'INELIGIBLE',
+                    'Remark': item.remark || '', 
                     'Neck Pain in Past 6 Months': item.neckPainStatus?.hasPain ? 'Yes' : 'No',
                     'Pain Intensity (0-10)': item.neckPainStatus?.intensity || 0,
                     'NDI Total Score (Max 50)': item.neckPainStatus?.hasPain ? ndiTotal : 'N/A',
