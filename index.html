@@ -559,10 +559,10 @@
                     <select id="tableSort" onchange="renderOperatorTable()" class="px-3 py-2 border border-slate-300 rounded-lg bg-white text-slate-700 font-medium focus:outline-none focus:ring-1 focus:ring-polyu-800">
                         <option value="time_desc">Sort: Newest First (Default)</option>
                         <option value="time_asc">Sort: Oldest First</option>
-                        <option value="gender_age_asc">Gender → Age (Youngest to Oldest)</option>
-                        <option value="gender_age_desc">Gender → Age (Oldest to Youngest)</option>
-                        <option value="gender_eligibility">Gender → Eligibility (Eligible First)</option>
-                        <option value="gender_group">Gender → Group (Neck Pain vs. Control)</option>
+                        <option value="age_asc">Sort: Age (Youngest to Oldest)</option>
+                        <option value="age_desc">Sort: Age (Oldest to Youngest)</option>
+                        <option value="eligibility">Sort: Eligibility (Eligible First)</option>
+                        <option value="group">Sort: Group (Neck Pain vs. Control)</option>
                     </select>
                 </div>
                 <div class="space-x-2">
@@ -1620,13 +1620,6 @@
             goToSection(0);
         }
 
-        function getGenderRank(genderVal) {
-            const g = String(genderVal || '').trim().toLowerCase();
-            if (g === 'male' || g === '男' || g.includes('male')) return 1;
-            if (g === 'female' || g === '女' || g.includes('female')) return 2;
-            return 3;
-        }
-        
         function sortResponsesList(list, sortMode) {
             const sorted = [...list];
         
@@ -1640,22 +1633,18 @@
                 if (sortMode === 'time_desc') {
                     return timeB - timeA;
                 }
-        
-                const genderDiff = getGenderRank(a.demographics?.gender) - getGenderRank(b.demographics?.gender);
-                if (genderDiff !== 0) return genderDiff;
-        
-                if (sortMode === 'gender_age_asc') {
+                if (sortMode === 'age_asc') {
                     return (Number(a.demographics?.age) || 0) - (Number(b.demographics?.age) || 0) || (timeB - timeA);
                 }
-                if (sortMode === 'gender_age_desc') {
+                if (sortMode === 'age_desc') {
                     return (Number(b.demographics?.age) || 0) - (Number(a.demographics?.age) || 0) || (timeB - timeA);
                 }
-                if (sortMode === 'gender_eligibility') {
+                if (sortMode === 'eligibility') {
                     const eligA = evaluateParticipant(a).overallEligible ? 0 : 1;
                     const eligB = evaluateParticipant(b).overallEligible ? 0 : 1;
                     return (eligA - eligB) || (timeB - timeA);
                 }
-                if (sortMode === 'gender_group') {
+                if (sortMode === 'group') {
                     const grpA = a.neckPainStatus?.hasPain ? 0 : 1;
                     const grpB = b.neckPainStatus?.hasPain ? 0 : 1;
                     return (grpA - grpB) || (timeB - timeA);
@@ -1687,13 +1676,7 @@
             }));
             
             const sortMode = document.getElementById('tableSort')?.value || 'time_desc';
-            currentResponses = sortResponsesList(mapped, sortMode);      
-            
-            currentResponses.sort((a, b) => {
-                const timeA = Date.parse(a._submittedAt) || 0;
-                const timeB = Date.parse(b._submittedAt) || 0;
-                return timeB - timeA;
-            });            
+            currentResponses = sortResponsesList(mapped, sortMode);         
             
             const data = currentResponses;
             let total = data.length;
