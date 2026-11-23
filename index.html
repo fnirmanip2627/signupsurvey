@@ -1619,7 +1619,21 @@
                 tbody.innerHTML = '<tr><td colspan="8" class="text-center py-8 text-rose-600">Unable to load responses. Check operator access and Supabase RLS setup.</td></tr>';
                 return;
             }
-            currentResponses = (rows || []).map(row => ({ ...(row.data || {}), id: row.respondent_id || String(row.id).padStart(3, '0'), timestamp: (row.data || {}).timestamp || row.submitted_at, _dbId: row.id }));
+            
+            currentResponses = (rows || []).map(row => ({
+                ...(row.data || {}),
+                id: row.respondent_id || String(row.id).padStart(3, '0'),
+                timestamp: (row.data || {}).timestamp || row.submitted_at,
+                _submittedAt: row.submitted_at || (row.data || {}).timestamp || '',
+                _dbId: row.id
+            }));
+            
+            currentResponses.sort((a, b) => {
+                const timeA = Date.parse(a._submittedAt) || 0;
+                const timeB = Date.parse(b._submittedAt) || 0;
+                return timeB - timeA;
+            });            
+            
             const data = currentResponses;
             let total = data.length;
             let painCount = 0;
