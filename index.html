@@ -569,6 +569,7 @@
                         <tr>
                             <th class="p-3">ID / Date</th>
                             <th class="p-3">Name</th>
+                            <th class="p-3">Gender</th>
                             <th class="p-3">Age</th>
                             <th class="p-3">Group</th>
                             <th class="p-3">Gen. Screening</th>
@@ -1612,11 +1613,11 @@
         async function renderOperatorTable() {
             const tbody = document.getElementById('responsesTableBody');
 
-            tbody.innerHTML = '<tr><td colspan="8" class="text-center py-8 text-slate-400">Loading responses…</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="9" class="text-center py-8 text-slate-400">Loading responses…</td></tr>';
             const { data: rows, error } = await supabaseClient.from('responses').select('id, respondent_id, submitted_at, data').order('id', { ascending: false });
             if (error) {
                 console.error('Could not load responses:', error);
-                tbody.innerHTML = '<tr><td colspan="8" class="text-center py-8 text-rose-600">Unable to load responses. Check operator access and Supabase RLS setup.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="9" class="text-center py-8 text-rose-600">Unable to load responses. Check operator access and Supabase RLS setup.</td></tr>';
                 return;
             }
             
@@ -1645,7 +1646,7 @@
             if (data.length === 0) {
                 tbody.innerHTML = `
                     <tr>
-                        <td colspan="8" class="text-center py-8 text-slate-400">
+                        <td colspan="9" class="text-center py-8 text-slate-400">
                             No research submissions recorded yet. Click "Add Sample Demo Data" below to test operator reports.
                         </td>
                     </tr>
@@ -1672,6 +1673,13 @@
 
                     const groupText = isPain ? '<span class="font-semibold text-rose-800">Neck Pain Group</span>' : '<span class="font-semibold text-sky-800">Healthy Control</span>';
 
+                    const rawGender = item.demographics?.gender || 'N/A';
+                    const genderBadge = rawGender.toLowerCase().includes('male') && !rawGender.toLowerCase().includes('female')
+                        ? `<span class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-indigo-50 text-indigo-700 border border-indigo-200">Male</span>`
+                        : rawGender.toLowerCase().includes('female')
+                            ? `<span class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-pink-50 text-pink-700 border border-pink-200">Female</span>`
+                            : `<span class="text-slate-400">N/A</span>`;
+                                        
                     const row = document.createElement('tr');
                     row.className = 'hover:bg-slate-50 transition';
                     row.innerHTML = `
@@ -1683,6 +1691,7 @@
                             <div class="font-semibold text-slate-800">${item.demographics.name}</div>
                             <div class="text-[10px] text-slate-500">${item.demographics.email}</div>
                         </td>
+                        <td class="p-3">${genderBadge}</td>
                         <td class="p-3 font-medium text-slate-700">${item.demographics.age}</td>
                         <td class="p-3 text-xs">${groupText}</td>
                         <td class="p-3">${genBadge}</td>
