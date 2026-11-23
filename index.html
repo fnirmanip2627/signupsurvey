@@ -554,14 +554,24 @@
 
             <!-- Management Tools Bar -->
             <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4 text-xs">
-                <input type="text" id="tableSearch" onkeyup="filterTable()" placeholder="Search by name or email..." class="px-3 py-2 border border-slate-300 rounded-lg w-full sm:w-64 focus:outline-none focus:ring-1 focus:ring-polyu-800">
+                <div class="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+                    <input type="text" id="tableSearch" onkeyup="filterTable()" placeholder="Search by name or email..." class="px-3 py-2 border border-slate-300 rounded-lg w-full sm:w-64 focus:outline-none focus:ring-1 focus:ring-polyu-800">
+                    <select id="tableSort" onchange="renderOperatorTable()" class="px-3 py-2 border border-slate-300 rounded-lg bg-white text-slate-700 font-medium focus:outline-none focus:ring-1 focus:ring-polyu-800">
+                        <option value="time_desc">Sort: Newest First (Default)</option>
+                        <option value="time_asc">Sort: Oldest First</option>
+                        <option value="gender_age_asc">Gender → Age (Youngest to Oldest)</option>
+                        <option value="gender_age_desc">Gender → Age (Oldest to Youngest)</option>
+                        <option value="gender_eligibility">Gender → Eligibility (Eligible First)</option>
+                        <option value="gender_group">Gender → Group (Neck Pain vs. Control)</option>
+                    </select>
+                </div>
                 <div class="space-x-2">
                     <span class="text-slate-400">Cloud database</span>
                     <span class="text-slate-300">|</span>
                     <button onclick="clearAllResponses()" class="text-rose-600 hover:text-rose-800 underline font-medium">Clear All Data</button>
                 </div>
             </div>
-
+                        
             <!-- Submissions Table -->
             <div class="overflow-x-auto border border-slate-200 rounded-xl shadow-xs">
                 <table class="w-full text-left text-xs text-slate-700">
@@ -1610,6 +1620,53 @@
             goToSection(0);
         }
 
+        function getGenderRank(genderVal) {
+            const g = String(genderVal || '').trim().toLowerCase();
+            if (g === 'male' || g === '男' || g.includes('male')) return 1;
+            if (g === 'female' || g === '女' || g.includes('female')) return 2;
+            return 3;
+        }
+        
+        function sortResponsesList(list, sortMode) {
+            const sorted = [...list];
+        
+            sorted.sort((a, b) => {
+                const timeA = Date.parse(a._submittedAt || a.timestamp || '') || 0;
+                const timeB = Date.parse(b._submittedAt || b.timestamp || '') || 0;
+        
+                if (sortMode === 'time_asc') {
+                    return timeA - timeB;
+                }
+                if (sortMode === 'time_desc') {
+                    return timeB - timeA;
+                }
+        
+                const genderDiff = getGenderRank(a.demographics?.gender) - getGenderRank(b.demographics?.gender);
+                if (genderDiff !== 0) return genderDiff;
+        
+                if (sortMode === 'gender_age_asc') {
+                    return (Number(a.demographics?.age) || 0) - (Number(b.demographics?.age) || 0) || (timeB - timeA);
+                }
+                if (sortMode === 'gender_age_desc') {
+                    return (Number(b.demographics?.age) || 0) - (Number(a.demographics?.age) || 0) || (timeB - timeA);
+                }
+                if (sortMode === 'gender_eligibility') {
+                    const eligA = evaluateParticipant(a).overallEligible ? 0 : 1;
+                    const eligB = evaluateParticipant(b).overallEligible ? 0 : 1;
+                    return (eligA - eligB) || (timeB - timeA);
+                }
+                if (sortMode === 'gender_group') {
+                    const grpA = a.neckPainStatus?.hasPain ? 0 : 1;
+                    const grpB = b.neckPainStatus?.hasPain ? 0 : 1;
+                    return (grpA - grpB) || (timeB - timeA);
+                }
+        
+                return timeB - timeA;
+            });
+        
+            return sorted;
+        }
+        
         async function renderOperatorTable() {
             const tbody = document.getElementById('responsesTableBody');
 
@@ -1621,13 +1678,16 @@
                 return;
             }
             
-            currentResponses = (rows || []).map(row => ({
+            const mapped = (rows || []).map(row => ({
                 ...(row.data || {}),
                 id: row.respondent_id || String(row.id).padStart(3, '0'),
                 timestamp: (row.data || {}).timestamp || row.submitted_at,
                 _submittedAt: row.submitted_at || (row.data || {}).timestamp || '',
                 _dbId: row.id
             }));
+            
+            const sortMode = document.getElementById('tableSort')?.value || 'time_desc';
+            currentResponses = sortResponsesList(mapped, sortMode);      
             
             currentResponses.sort((a, b) => {
                 const timeA = Date.parse(a._submittedAt) || 0;
